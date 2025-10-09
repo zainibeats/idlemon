@@ -1,4 +1,5 @@
 {
     "background_image": "assets/images/default_background.jpg",
-    "mute_audio": false
+    "mute_audio": false,
+    "borderless_mode": false
 }

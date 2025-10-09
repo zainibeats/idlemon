@@ -1,8 +1,9 @@
 """IdleMon - Pokemon encounter simulator with shiny hunting"""
 import sys
 from pathlib import Path
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 
 from config_loader import load_config, check_file_exists, get_base_path
 from data_manager import DataManager
@@ -30,6 +31,24 @@ class IdleMonWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("IdleMon")
 
+        # Store borderless mode setting
+        self.borderless_mode = config["borderless_mode"]
+        self.shiny_paused = False  # Track if hunt is paused due to shiny
+
+        # Setup borderless transparent window if enabled
+        if self.borderless_mode:
+            self.setWindowFlags(
+                Qt.FramelessWindowHint |
+                Qt.WindowStaysOnTopHint |
+                Qt.Tool
+            )
+            self.setAttribute(Qt.WA_TranslucentBackground)
+            # Variables for drag functionality
+            self.drag_position = None
+
+            # Create system tray icon
+            self._create_tray_icon()
+
         # Initialize managers
         self.game = GameController(config, data_manager)
         self.audio = AudioManager(PROJECT_ROOT, config["mute_audio"])
@@ -47,7 +66,7 @@ class IdleMonWindow(QMainWindow):
             background_path = PROJECT_ROOT / "assets" / "images" / "default_background.jpg"
 
         # Initialize UI
-        self.ui = UIManager(self, PROJECT_ROOT, background_path)
+        self.ui = UIManager(self, PROJECT_ROOT, background_path, self.borderless_mode)
         self.ui.setup_ui()
 
         # Connect signals
@@ -57,12 +76,29 @@ class IdleMonWindow(QMainWindow):
         shiny_count = self.game.initialize_shiny_count()
         self.ui.update_shiny_count(shiny_count)
 
-        # Connect continue button
-        self.ui.continue_button.clicked.connect(self.continue_hunt)
+        # Connect continue button (only in normal mode)
+        if not self.borderless_mode:
+            self.ui.continue_button.clicked.connect(self.continue_hunt)
 
         # Start game
         self.game.start_timer()
         self.game.start_encounter_loop()
+
+    def _create_tray_icon(self):
+        """Create system tray icon for borderless mode"""
+        # Create tray icon (using a simple approach without icon file for now)
+        self.tray_icon = QSystemTrayIcon(self)
+
+        # Create tray menu
+        tray_menu = QMenu()
+
+        # Add exit action
+        exit_action = tray_menu.addAction("Exit IdleMon")
+        exit_action.triggered.connect(self.close)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.setToolTip("IdleMon - Pokemon Desktop Pet")
+        self.tray_icon.show()
 
     def _connect_signals(self):
         """Connect game signals to UI updates"""
@@ -96,6 +132,10 @@ class IdleMonWindow(QMainWindow):
         self.ui.update_shiny_count(new_count)
         self.ui.show_continue_button()
 
+        # Mark shiny paused for borderless mode
+        if self.borderless_mode:
+            self.shiny_paused = True
+
     def continue_hunt(self):
         """Handle continue button click"""
         # Play sound
@@ -108,14 +148,37 @@ class IdleMonWindow(QMainWindow):
         # Hide button
         self.ui.hide_continue_button()
 
+        # Clear shiny paused state
+        if self.borderless_mode:
+            self.shiny_paused = False
+
         # Restart game
         self.game.reset_timer()
         self.game.start_encounter_loop()
 
+    def mousePressEvent(self, event):
+        """Handle mouse press for dragging in borderless mode"""
+        if self.borderless_mode and event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        """Handle mouse move for dragging in borderless mode"""
+        if self.borderless_mode and event.buttons() == Qt.LeftButton and self.drag_position:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+
     def closeEvent(self, event):
         """Handle window close"""
         self.game.stop_timer()
+
+        # Clean up tray icon if in borderless mode
+        if self.borderless_mode and hasattr(self, 'tray_icon'):
+            self.tray_icon.hide()
+
         event.accept()
+        # Force application quit
+        QApplication.quit()
 
 
 def main():

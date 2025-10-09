@@ -45,6 +45,7 @@ DEFAULT_CONFIG = {
     },
     "shiny_rate": 2000,         # 1 in X chance of shiny
     "mute_audio": False,        # Audio mute state
+    "borderless_mode": False,   # Borderless transparent window mode
 
     # File paths
     "shiny_count_file": "logs/shiny_count.bin",

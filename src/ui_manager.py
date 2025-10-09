@@ -1,6 +1,6 @@
 """UI management module for Qt interface"""
 from pathlib import Path
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QMovie
 
@@ -8,7 +8,7 @@ from PySide6.QtGui import QPixmap, QMovie
 class UIManager:
     """Manages the Qt user interface components"""
 
-    def __init__(self, main_window, project_root, background_path):
+    def __init__(self, main_window, project_root, background_path, borderless_mode=False):
         """
         Initialize UI manager
 
@@ -16,10 +16,12 @@ class UIManager:
             main_window: The main QMainWindow instance
             project_root: Base path for assets
             background_path: Path to background image
+            borderless_mode: Whether to use borderless transparent mode
         """
         self.window = main_window
         self.project_root = Path(project_root)
         self.background_path = Path(background_path)
+        self.borderless_mode = borderless_mode
 
         # UI components (will be created in setup)
         self.info_label = None
@@ -32,33 +34,52 @@ class UIManager:
 
     def setup_ui(self):
         """Setup the main UI with all components"""
-        # Load and scale background
-        background_pixmap = QPixmap(str(self.background_path))
-        background_pixmap = background_pixmap.scaledToHeight(500, Qt.SmoothTransformation)
+        if self.borderless_mode:
+            # Borderless mode: transparent background, only pokemon gif
+            central_widget = QWidget()
+            central_widget.setStyleSheet("background: transparent;")
+            self.window.setCentralWidget(central_widget)
 
-        # Create central widget with background
-        central_widget = QLabel()
-        central_widget.setPixmap(background_pixmap)
-        central_widget.setScaledContents(False)
-        self.window.setCentralWidget(central_widget)
+            # Simple layout for pokemon only
+            self.foreground_layout = QVBoxLayout(central_widget)
+            self.foreground_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create foreground layout
-        self.foreground_layout = QVBoxLayout(central_widget)
-        self.foreground_layout.setContentsMargins(10, 10, 10, 10)
+            # Create Pokemon display area
+            self._create_pokemon_display()
 
-        # Create stats panel
-        self._create_stats_panel()
+            # Set default window size for borderless mode
+            self.window.resize(200, 200)
 
-        # Create Pokemon display area
-        self._create_pokemon_display()
+            return 200, 200
+        else:
+            # Normal mode: background image with stats
+            # Load and scale background
+            background_pixmap = QPixmap(str(self.background_path))
+            background_pixmap = background_pixmap.scaledToHeight(500, Qt.SmoothTransformation)
 
-        # Create continue button
-        self._create_continue_button()
+            # Create central widget with background
+            central_widget = QLabel()
+            central_widget.setPixmap(background_pixmap)
+            central_widget.setScaledContents(False)
+            self.window.setCentralWidget(central_widget)
 
-        # Set window size based on background
-        self.window.setFixedSize(background_pixmap.width(), background_pixmap.height())
+            # Create foreground layout
+            self.foreground_layout = QVBoxLayout(central_widget)
+            self.foreground_layout.setContentsMargins(10, 10, 10, 10)
 
-        return background_pixmap.width(), background_pixmap.height()
+            # Create stats panel
+            self._create_stats_panel()
+
+            # Create Pokemon display area
+            self._create_pokemon_display()
+
+            # Create continue button
+            self._create_continue_button()
+
+            # Set window size based on background
+            self.window.setFixedSize(background_pixmap.width(), background_pixmap.height())
+
+            return background_pixmap.width(), background_pixmap.height()
 
     def _create_stats_panel(self):
         """Create the stats display panel"""
@@ -134,6 +155,12 @@ class UIManager:
         self.pokemon_label = QLabel()
         self.pokemon_label.setAlignment(Qt.AlignCenter)
         self.pokemon_label.setStyleSheet("background: transparent;")
+
+        # Enable context menu for borderless mode
+        if self.borderless_mode:
+            self.pokemon_label.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.pokemon_label.customContextMenuRequested.connect(self._show_context_menu)
+
         self.foreground_layout.addWidget(self.pokemon_label, alignment=Qt.AlignCenter)
         self.foreground_layout.addStretch()
 
@@ -189,12 +216,19 @@ class UIManager:
         movie.setScaledSize(movie.scaledSize() * 1.5)
         movie.setSpeed(100)
 
+        offset_style = "background: transparent; margin-top: -20px;" if is_shiny else "background: transparent; margin-top: 0px;"
+        self.pokemon_label.setStyleSheet(offset_style)
+
         self.pokemon_label.setMovie(movie)
         movie.start()
 
     def update_encounter_display(self, pokemon_name, rarity, is_shiny):
         """Update the encounter info display"""
         self.display_pokemon_gif(pokemon_name, is_shiny)
+
+        # Skip text updates in borderless mode
+        if self.borderless_mode:
+            return
 
         if is_shiny:
             self.info_label.setText(f"{pokemon_name} - {rarity} (Shiny!)")
@@ -221,21 +255,50 @@ class UIManager:
 
     def update_encounter_count(self, count):
         """Update encounter counter display"""
-        self.encounter_label.setText(f"Encounters: {count}")
+        if not self.borderless_mode:
+            self.encounter_label.setText(f"Encounters: {count}")
 
     def update_shiny_count(self, count):
         """Update shiny counter display"""
-        self.shiny_label.setText(f"Shiny Pokémon Found: {count}")
+        if not self.borderless_mode:
+            self.shiny_label.setText(f"Shiny Pokémon Found: {count}")
 
     def update_timer(self, seconds):
         """Update timer display"""
-        minutes, secs = divmod(seconds, 60)
-        self.stats_label.setText(f"Time Elapsed: {minutes:02}:{secs:02}")
+        if not self.borderless_mode:
+            minutes, secs = divmod(seconds, 60)
+            self.stats_label.setText(f"Time Elapsed: {minutes:02}:{secs:02}")
 
     def show_continue_button(self):
         """Show the continue button"""
-        self.continue_button.show()
+        if not self.borderless_mode:
+            self.continue_button.show()
 
     def hide_continue_button(self):
         """Hide the continue button"""
-        self.continue_button.hide()
+        if not self.borderless_mode:
+            self.continue_button.hide()
+
+    def _show_context_menu(self, position):
+        """Show context menu for borderless mode"""
+        if not self.borderless_mode:
+            return
+
+        menu = QMenu()
+
+        # Add continue hunt option if shiny is paused
+        if hasattr(self.window, 'shiny_paused') and self.window.shiny_paused:
+            continue_action = menu.addAction("Continue Hunt")
+            continue_action.triggered.connect(self.window.continue_hunt)
+            menu.addSeparator()
+
+        # Always add exit option
+        exit_action = menu.addAction("Exit IdleMon")
+        exit_action.triggered.connect(self._exit_application)
+
+        # Show menu at cursor position
+        menu.exec(self.pokemon_label.mapToGlobal(position))
+
+    def _exit_application(self):
+        """Properly exit the application"""
+        self.window.close()
