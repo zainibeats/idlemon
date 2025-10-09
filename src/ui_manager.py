@@ -219,9 +219,6 @@ class UIManager:
         movie.setScaledSize(movie.scaledSize() * 1.5)
         movie.setSpeed(100)
 
-        offset_style = "background: transparent; margin-top: -20px;" if is_shiny else "background: transparent; margin-top: 0px;"
-        self.pokemon_label.setStyleSheet(offset_style)
-
         self.pokemon_label.setMovie(movie)
         movie.start()
 
