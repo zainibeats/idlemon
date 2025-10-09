@@ -168,6 +168,9 @@ class UIManager:
         """Create the continue hunt button"""
         self.continue_button = QPushButton("Continue Hunt")
         self.continue_button.setMinimumSize(150, 40)
+        self.continue_button.setFocusPolicy(Qt.NoFocus)
+        self.continue_button.setAutoDefault(False)
+        self.continue_button.setDefault(False)
         self.continue_button.setStyleSheet("""
             QPushButton {
                 background-color: #2ecc71;
