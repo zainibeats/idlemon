@@ -119,6 +119,7 @@ __pypackages__/
 # logs
 shinies_encountered.txt
 shiny_count.bin
+settings.local.json
 
 # Celery stuff
 celerybeat-schedule
