@@ -1,19 +1,26 @@
+"""Data management module for Pokemon data and save files"""
 import os
 import base64
-from config_loader import load_config, get_base_path, POKEMON_DATA_HASHES
+from pathlib import Path
+from config_loader import get_base_path, POKEMON_DATA_HASHES
 from logger import logger
 
-# Load initial configuration
-config = load_config()
-shiny_count_file = config["shiny_count_file"]
 
 class DataManager:
+    """Manages Pokemon data and save files"""
+
     def __init__(self, config):
+        """
+        Initialize data manager
+
+        Args:
+            config: Configuration dictionary
+        """
         base_path = get_base_path()
         # Setup file paths
-        self.shiny_count_file = base_path['data'] / "logs/shiny_count.bin"
+        self.shiny_count_file = base_path / "logs" / "shiny_count.bin"
         self.pokemon_data_files = {
-            gen: base_path['runtime'] / path
+            gen: Path(path)
             for gen, path in config["pokemon_data_files"].items()
         }
         self.pokemon_data_cache = None

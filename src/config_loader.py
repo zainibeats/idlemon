@@ -1,24 +1,24 @@
+"""Configuration management module"""
 import json
 import os
 import sys
 from pathlib import Path
 
+
 def get_base_path():
-    # Get application base path for both dev and PyInstaller modes
+    """
+    Get application base path for both dev and PyInstaller modes
+
+    Returns:
+        Path: Base path for the application
+    """
     if getattr(sys, 'frozen', False):
         # PyInstaller mode: use executable directory
-        exe_dir = Path(sys.executable).parent
-        return {
-            'runtime': exe_dir,  # For reading assets
-            'data': exe_dir      # For writing data
-        }
+        return Path(sys.executable).parent
     else:
         # Development mode: use project root
-        dev_path = Path(__file__).parent.parent
-        return {
-            'runtime': dev_path,
-            'data': dev_path
-        }
+        return Path(__file__).parent.parent
+
 
 # Set application root path
 PROJECT_ROOT = get_base_path()
@@ -62,17 +62,22 @@ DEFAULT_CONFIG = {
 }
 
 class ConfigManager:
+    """Manages application configuration and directory structure"""
+
     def __init__(self, config_file="config.json"):
-        self.config_file = str(PROJECT_ROOT['data'] / config_file)
-        # Create required directories
-        (PROJECT_ROOT['data'] / "logs").mkdir(exist_ok=True)
-        (PROJECT_ROOT['data'] / "assets/data").mkdir(parents=True, exist_ok=True)
-        for gen in range(1, 6):
-            (PROJECT_ROOT['data'] / f"assets/gifs/gen{gen}/normal").mkdir(parents=True, exist_ok=True)
-            (PROJECT_ROOT['data'] / f"assets/gifs/gen{gen}/shiny").mkdir(parents=True, exist_ok=True)
-        (PROJECT_ROOT['data'] / "assets/images").mkdir(parents=True, exist_ok=True)
-        (PROJECT_ROOT['data'] / "assets/sounds").mkdir(parents=True, exist_ok=True)
+        self.config_file = str(PROJECT_ROOT / config_file)
+        self._create_directories()
         self.config = self.load_config()
+
+    def _create_directories(self):
+        """Create required directory structure"""
+        (PROJECT_ROOT / "logs").mkdir(exist_ok=True)
+        (PROJECT_ROOT / "assets/data").mkdir(parents=True, exist_ok=True)
+        for gen in range(1, 6):
+            (PROJECT_ROOT / f"assets/gifs/gen{gen}/normal").mkdir(parents=True, exist_ok=True)
+            (PROJECT_ROOT / f"assets/gifs/gen{gen}/shiny").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "assets/images").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "assets/sounds").mkdir(parents=True, exist_ok=True)
 
     def validate_pokemon_data(self, file_path):
         """Verify Pokemon data file integrity using SHA-256 hash"""
@@ -93,6 +98,7 @@ class ConfigManager:
             sys.exit(1)  # Exit on hash mismatch
             
     def load_config(self):
+        """Load configuration from file or use defaults"""
         # Load user config if exists
         user_config = {}
         if os.path.exists(self.config_file):
@@ -101,27 +107,27 @@ class ConfigManager:
                     user_config = json.load(file)
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"Error loading config file: {e}. Using default settings.")
-        
+
         # Merge user config with defaults
         config = {**DEFAULT_CONFIG, **user_config}
-        
-        # Convert log paths to absolute
+
+        # Convert paths to absolute
         path_keys = ["shiny_count_file", "shinies_encounter_file"]
         for key in path_keys:
             if not os.path.isabs(config[key]):
-                config[key] = str(PROJECT_ROOT['data'] / config[key])
-        
+                config[key] = str(PROJECT_ROOT / config[key])
+
         # Convert Pokemon data paths to absolute
         if not os.path.isabs(next(iter(config["pokemon_data_files"].values()))):
             config["pokemon_data_files"] = {
-                gen: str(PROJECT_ROOT['data'] / path)
+                gen: str(PROJECT_ROOT / path)
                 for gen, path in config["pokemon_data_files"].items()
             }
-        
+
         # Verify all Pokemon data files
         for file_path in config["pokemon_data_files"].values():
             self.validate_pokemon_data(file_path)
-            
+
         return config
 
 # Helper functions

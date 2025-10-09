@@ -1,4 +1,4 @@
-Pillow>=10.0.0     # For image handling and GIF animations
-pygame>=2.5.0      # For sound effects
+PySide6>=6.6.0     # Modern Qt6 GUI framework
+Pillow>=10.0.0     # For image handling (still needed for some image operations)
 colorama>=0.4.6    # For colored terminal output
 pyinstaller>=6.0.0 # For creating the executable (build only) 

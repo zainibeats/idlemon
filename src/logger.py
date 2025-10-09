@@ -1,14 +1,17 @@
+"""Logging module for errors and shiny encounters"""
 import os
 import logging
-from datetime import datetime
 from pathlib import Path
 from config_loader import get_base_path
 
+
 class LogManager:
+    """Manages application logging"""
+
     def __init__(self):
         base_path = get_base_path()
         # Setup log directory
-        self.logs_dir = base_path['data'] / "logs"
+        self.logs_dir = base_path / "logs"
         self.logs_dir.mkdir(exist_ok=True)
 
         # Configure error logging
