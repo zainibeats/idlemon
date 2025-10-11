@@ -4,6 +4,9 @@ import os
 import sys
 from pathlib import Path
 
+# Average time per shiny is ENCOUNTER_DELAY * SHINY_RATE = X seconds - Default is ~1.39 hours
+ENCOUNTER_DELAY = 2.5 # Time between encounters (seconds) - Default is 2.5
+SHINY_RATE = 2000 # 1 in X chance of shiny - Default is 2000
 
 def get_base_path():
     """
@@ -35,7 +38,7 @@ POKEMON_DATA_HASHES = {
 # Default configuration settings
 DEFAULT_CONFIG = {
     # Gameplay settings
-    "encounter_delay": 2.5,      # Time between encounters (seconds)
+    "encounter_delay": ENCOUNTER_DELAY,
     "rarity_weights": {          # Spawn rate weights
         "Very Common": 45,
         "Common": 30,
@@ -43,7 +46,7 @@ DEFAULT_CONFIG = {
         "Rare": 7,
         "Very Rare": 1
     },
-    "shiny_rate": 2000,         # 1 in X chance of shiny
+    "shiny_rate": SHINY_RATE,
     "mute_audio": False,        # Audio mute state
     "borderless_mode": False,   # Borderless transparent window mode
 
