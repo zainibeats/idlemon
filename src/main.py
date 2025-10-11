@@ -5,19 +5,17 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 
-from config_loader import load_config, check_file_exists, get_base_path
+from config_loader import load_config, check_file_exists, get_base_path, PROJECT_ROOT
 from data_manager import DataManager
 from audio_manager import AudioManager
 from ui_manager import UIManager
 from game_controller import GameController
+from settings_dialog import SettingsDialog
 
 # Print startup info
 print("Starting IdleMon...")
 print(f"Executable path: {sys.executable}")
 print(f"Working directory: {Path.cwd()}")
-
-# Get application root path
-PROJECT_ROOT = get_base_path()
 
 # Initialize configuration and managers
 config = load_config()
@@ -79,6 +77,8 @@ class IdleMonWindow(QMainWindow):
         # Connect continue button (only in normal mode)
         if not self.borderless_mode:
             self.ui.continue_button.clicked.connect(self.continue_hunt)
+            # Connect settings button
+            self.ui.settings_button.clicked.connect(self.open_settings)
 
         # Start game
         self.game.start_timer()
@@ -155,6 +155,37 @@ class IdleMonWindow(QMainWindow):
         # Restart game
         self.game.reset_timer()
         self.game.start_encounter_loop()
+
+    def open_settings(self):
+        """Open settings dialog"""
+        config_file_path = PROJECT_ROOT / "config.json"
+        dialog = SettingsDialog(config, str(config_file_path), self)
+        dialog.settings_changed.connect(self.on_settings_changed)
+        dialog.exec()
+
+    def on_settings_changed(self, new_config):
+        """Handle settings changes"""
+        # Update global config (shallow update for immediate changes)
+        global config
+
+        # Apply immediate changes (things that don't require restart)
+        if 'mute_audio' in new_config and new_config['mute_audio'] != config.get('mute_audio'):
+            # Update audio manager
+            self.audio.set_mute(new_config['mute_audio'])
+            config['mute_audio'] = new_config['mute_audio']
+
+        if 'encounter_delay' in new_config and new_config['encounter_delay'] != config.get('encounter_delay'):
+            # Update game controller's encounter delay
+            self.game.encounter_delay = new_config['encounter_delay']
+            config['encounter_delay'] = new_config['encounter_delay']
+
+        if 'shiny_rate' in new_config and new_config['shiny_rate'] != config.get('shiny_rate'):
+            # Update game controller's shiny rate
+            self.game.shiny_rate = new_config['shiny_rate']
+            config['shiny_rate'] = new_config['shiny_rate']
+
+        # Note: background_image and borderless_mode require restart
+        # These are already handled by the dialog showing a restart message
 
     def mousePressEvent(self, event):
         """Handle mouse press for dragging in borderless mode"""

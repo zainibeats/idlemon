@@ -1,6 +1,6 @@
 """UI management module for Qt interface"""
 from pathlib import Path
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QMovie
 
@@ -30,6 +30,7 @@ class UIManager:
         self.stats_label = None
         self.pokemon_label = None
         self.continue_button = None
+        self.settings_button = None
         self.foreground_layout = None
 
     def setup_ui(self):
@@ -146,6 +147,28 @@ class UIManager:
             }
         """)
         stats_layout.addWidget(self.stats_label)
+
+        # Settings button
+        self.settings_button = QPushButton("⚙ Settings")
+        self.settings_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+                margin-top: 5px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #21618c;
+            }
+        """)
+        stats_layout.addWidget(self.settings_button)
 
         self.foreground_layout.addWidget(stats_widget, alignment=Qt.AlignTop | Qt.AlignLeft)
         self.foreground_layout.addStretch()
@@ -292,7 +315,12 @@ class UIManager:
             continue_action.triggered.connect(self.window.continue_hunt)
             menu.addSeparator()
 
+        # Add settings option
+        settings_action = menu.addAction("⚙ Settings")
+        settings_action.triggered.connect(self.window.open_settings)
+
         # Always add exit option
+        menu.addSeparator()
         exit_action = menu.addAction("Exit IdleMon")
         exit_action.triggered.connect(self._exit_application)
 

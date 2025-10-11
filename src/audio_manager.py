@@ -53,3 +53,15 @@ class AudioManager:
         """Play continue button sound"""
         if self.continue_sound and not self.mute_audio:
             self.continue_sound.play()
+
+    def set_mute(self, mute):
+        """
+        Set audio mute state
+
+        Args:
+            mute: Boolean indicating whether to mute audio
+        """
+        self.mute_audio = mute
+        # Load sounds if unmuting and sounds aren't loaded
+        if not mute and (self.shiny_sound is None or self.continue_sound is None):
+            self._load_sounds()
