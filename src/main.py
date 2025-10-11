@@ -11,6 +11,8 @@ from audio_manager import AudioManager
 from ui_manager import UIManager
 from game_controller import GameController
 from settings_dialog import SettingsDialog
+from collection_window import CollectionWindow
+from logger import logger
 
 # Print startup info
 print("Starting IdleMon...")
@@ -32,6 +34,7 @@ class IdleMonWindow(QMainWindow):
         # Store borderless mode setting
         self.borderless_mode = config["borderless_mode"]
         self.shiny_paused = False  # Track if hunt is paused due to shiny
+        self.collection_window = None  # Track collection window instance
 
         # Setup borderless transparent window if enabled
         if self.borderless_mode:
@@ -79,6 +82,8 @@ class IdleMonWindow(QMainWindow):
             self.ui.continue_button.clicked.connect(self.continue_hunt)
             # Connect settings button
             self.ui.settings_button.clicked.connect(self.open_settings)
+            # Connect shiny label click to open collection window
+            self.ui.enable_shiny_label_click(self.open_collection_window)
 
         # Start game
         self.game.start_timer()
@@ -162,6 +167,17 @@ class IdleMonWindow(QMainWindow):
         dialog = SettingsDialog(config, str(config_file_path), self)
         dialog.settings_changed.connect(self.on_settings_changed)
         dialog.exec()
+
+    def open_collection_window(self):
+        """Open or bring to front the shiny collection window"""
+        # If window already exists and is visible, bring it to front
+        if self.collection_window and self.collection_window.isVisible():
+            self.collection_window.raise_()
+            self.collection_window.activateWindow()
+        else:
+            # Create new collection window
+            self.collection_window = CollectionWindow(logger, PROJECT_ROOT, self)
+            self.collection_window.show()
 
     def on_settings_changed(self, new_config):
         """Handle settings changes"""

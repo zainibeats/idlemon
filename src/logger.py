@@ -49,7 +49,7 @@ class LogManager:
             self.shiny_encounters[pokemon_name]['count'] += 1
         else:
             self.shiny_encounters[pokemon_name] = {'rarity': rarity, 'count': 1}
-        
+
         try:
             # Write updated encounters to log file
             with open(self.shiny_log_path, 'w', encoding='utf-8') as f:
@@ -58,6 +58,16 @@ class LogManager:
         except Exception as e:
             self.error_logger.error(f"Error writing to shiny log: {str(e)}")
             return True  # Return success even if logging failed
+
+    def get_all_shinies(self):
+        """
+        Get all recorded shiny encounters
+
+        Returns:
+            dict: Dictionary of shiny encounters with format:
+                  {pokemon_name: {'rarity': str, 'count': int}}
+        """
+        return self.shiny_encounters.copy()
 
 # Create global logger instance
 logger = LogManager() 

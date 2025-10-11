@@ -124,7 +124,7 @@ class UIManager:
         """)
         stats_layout.addWidget(self.encounter_label)
 
-        # Shiny counter
+        # Shiny counter (clickable)
         self.shiny_label = QLabel("Shiny Pokémon Found: 0")
         self.shiny_label.setStyleSheet("""
             QLabel {
@@ -133,7 +133,13 @@ class UIManager:
                 background: transparent;
                 padding: 5px;
             }
+            QLabel:hover {
+                color: #FFD700;
+                text-decoration: underline;
+            }
         """)
+        self.shiny_label.setCursor(Qt.PointingHandCursor)
+        self.shiny_label.setToolTip("Click to view your shiny collection")
         stats_layout.addWidget(self.shiny_label)
 
         # Timer
@@ -315,6 +321,10 @@ class UIManager:
             continue_action.triggered.connect(self.window.continue_hunt)
             menu.addSeparator()
 
+        # Add collection window option
+        collection_action = menu.addAction("View Collection")
+        collection_action.triggered.connect(self.window.open_collection_window)
+
         # Add settings option
         settings_action = menu.addAction("⚙ Settings")
         settings_action.triggered.connect(self.window.open_settings)
@@ -330,3 +340,13 @@ class UIManager:
     def _exit_application(self):
         """Properly exit the application"""
         self.window.close()
+
+    def enable_shiny_label_click(self, callback):
+        """
+        Enable click functionality on the shiny label
+
+        Args:
+            callback: Function to call when shiny label is clicked
+        """
+        if not self.borderless_mode and self.shiny_label:
+            self.shiny_label.mousePressEvent = lambda event: callback() if event.button() == Qt.LeftButton else None
