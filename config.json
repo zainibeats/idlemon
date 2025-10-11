@@ -1,5 +1,5 @@
 {
-    "background_image": "assets/images/default_background.jpg",
+    "borderless_mode": false,
     "mute_audio": false,
-    "borderless_mode": false
+    "background_image": "assets\\images\\default_background.jpg"
 }
