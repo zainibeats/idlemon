@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal
+from ui_colors import UIColors
 
 
 class SettingsDialog(QDialog):
@@ -54,36 +55,36 @@ class SettingsDialog(QDialog):
         button_layout.addStretch()
 
         save_button = QPushButton("Save")
-        save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2ecc71;
-                color: white;
+        save_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_PRIMARY};
+                color: {UIColors.TEXT_PRIMARY};
                 font-weight: bold;
                 border: none;
                 border-radius: 5px;
                 padding: 8px 20px;
                 min-width: 80px;
-            }
-            QPushButton:hover {
-                background-color: #27ae60;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.ACCENT_HOVER};
+            }}
         """)
         save_button.clicked.connect(self._save_settings)
 
         cancel_button = QPushButton("Cancel")
-        cancel_button.setStyleSheet("""
-            QPushButton {
-                background-color: #95a5a6;
-                color: white;
+        cancel_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_CANCEL};
+                color: {UIColors.TEXT_PRIMARY};
                 font-weight: bold;
                 border: none;
                 border-radius: 5px;
                 padding: 8px 20px;
                 min-width: 80px;
-            }
-            QPushButton:hover {
-                background-color: #7f8c8d;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.BORDER_DEFAULT};
+            }}
         """)
         cancel_button.clicked.connect(self.reject)
 
@@ -96,19 +97,20 @@ class SettingsDialog(QDialog):
     def _create_display_group(self):
         """Create display settings group"""
         group = QGroupBox("Display & Audio Settings")
-        group.setStyleSheet("""
-            QGroupBox {
+        group.setStyleSheet(f"""
+            QGroupBox {{
                 font-weight: bold;
-                border: 2px solid #9b59b6;
+                color: {UIColors.TEXT_PRIMARY};
+                border: 2px solid {UIColors.GROUP_DISPLAY};
                 border-radius: 5px;
                 margin-top: 10px;
                 padding-top: 10px;
-            }
-            QGroupBox::title {
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px;
-            }
+            }}
         """)
         layout = QVBoxLayout()
 
@@ -128,19 +130,20 @@ class SettingsDialog(QDialog):
     def _create_visual_group(self):
         """Create visual settings group"""
         group = QGroupBox("Visual Settings")
-        group.setStyleSheet("""
-            QGroupBox {
+        group.setStyleSheet(f"""
+            QGroupBox {{
                 font-weight: bold;
-                border: 2px solid #e67e22;
+                color: {UIColors.TEXT_PRIMARY};
+                border: 2px solid {UIColors.GROUP_VISUAL};
                 border-radius: 5px;
                 margin-top: 10px;
                 padding-top: 10px;
-            }
-            QGroupBox::title {
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px;
-            }
+            }}
         """)
         layout = QVBoxLayout()
 
@@ -152,17 +155,17 @@ class SettingsDialog(QDialog):
         self.inputs['background_image'].setReadOnly(True)
 
         browse_button = QPushButton("Browse...")
-        browse_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
+        browse_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_SECONDARY};
+                color: {UIColors.TEXT_PRIMARY};
                 border: none;
                 border-radius: 3px;
                 padding: 5px 15px;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.PRIMARY_BLUE};
+            }}
         """)
         browse_button.clicked.connect(self._browse_background)
 

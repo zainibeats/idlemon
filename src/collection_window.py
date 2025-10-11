@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QMovie, QPixmap
+from ui_colors import UIColors
 
 
 class CollectionItemWidget(QWidget):
@@ -28,13 +29,13 @@ class CollectionItemWidget(QWidget):
 
         # Container with dark background
         container = QWidget()
-        container.setStyleSheet("""
-            QWidget {
-                background-color: rgba(0, 0, 0, 200);
-                border: 2px solid #FFD700;
+        container.setStyleSheet(f"""
+            QWidget {{
+                background-color: {UIColors.BG_DARKER};
+                border: 2px solid {UIColors.BORDER_SHINY};
                 border-radius: 10px;
                 padding: 8px;
-            }
+            }}
         """)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(8, 8, 8, 8)
@@ -64,10 +65,10 @@ class CollectionItemWidget(QWidget):
         else:
             # Fallback if GIF not found
             self.gif_label.setText("?")
-            self.gif_label.setStyleSheet("""
+            self.gif_label.setStyleSheet(f"""
                 background: transparent;
                 border: none;
-                color: #FFD700;
+                color: {UIColors.TEXT_SHINY};
                 font-size: 48px;
                 font-weight: bold;
             """)
@@ -76,14 +77,14 @@ class CollectionItemWidget(QWidget):
 
         # Pokemon name
         name_label = QLabel(self.pokemon_name)
-        name_label.setStyleSheet("""
-            QLabel {
-                color: #FFD700;
+        name_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_SHINY};
                 font-size: 13px;
                 font-weight: bold;
                 background: transparent;
                 border: none;
-            }
+            }}
         """)
         name_label.setAlignment(Qt.AlignCenter)
         name_label.setWordWrap(True)
@@ -91,13 +92,13 @@ class CollectionItemWidget(QWidget):
 
         # Rarity
         rarity_label = QLabel(self.rarity)
-        rarity_label.setStyleSheet("""
-            QLabel {
-                color: #CCCCCC;
+        rarity_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_SECONDARY};
                 font-size: 10px;
                 background: transparent;
                 border: none;
-            }
+            }}
         """)
         rarity_label.setAlignment(Qt.AlignCenter)
         container_layout.addWidget(rarity_label)
@@ -105,16 +106,16 @@ class CollectionItemWidget(QWidget):
         # Count badge
         if self.count > 1:
             count_label = QLabel(f"x{self.count}")
-            count_label.setStyleSheet("""
-                QLabel {
-                    color: white;
+            count_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {UIColors.TEXT_PRIMARY};
                     font-size: 11px;
                     font-weight: bold;
-                    background-color: #e74c3c;
+                    background-color: {UIColors.BADGE_BG};
                     border: none;
                     border-radius: 10px;
                     padding: 3px 8px;
-                }
+                }}
             """)
             count_label.setAlignment(Qt.AlignCenter)
             container_layout.addWidget(count_label, alignment=Qt.AlignCenter)
@@ -147,10 +148,10 @@ class CollectionWindow(QDialog):
         main_layout.setSpacing(10)
 
         # Set window background
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #2C3E50;
-            }
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {UIColors.BG_DARK};
+            }}
         """)
 
         # Header section
@@ -159,13 +160,13 @@ class CollectionWindow(QDialog):
 
         # Title
         title_label = QLabel("Shiny Pokémon Collection")
-        title_label.setStyleSheet("""
-            QLabel {
-                color: #FFD700;
+        title_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_SHINY};
                 font-size: 20px;
                 font-weight: bold;
                 padding: 10px;
-            }
+            }}
         """)
         title_label.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(title_label)
@@ -177,17 +178,18 @@ class CollectionWindow(QDialog):
         # Search bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search Pokémon...")
-        self.search_bar.setStyleSheet("""
-            QLineEdit {
-                background-color: rgba(255, 255, 255, 200);
-                border: 2px solid #3498db;
+        self.search_bar.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {UIColors.BG_LIGHT};
+                color: {UIColors.TEXT_DARK};
+                border: 2px solid {UIColors.BORDER_DEFAULT};
                 border-radius: 5px;
                 padding: 8px;
                 font-size: 12px;
-            }
-            QLineEdit:focus {
-                border: 2px solid #FFD700;
-            }
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {UIColors.BORDER_FOCUS};
+            }}
         """)
         self.search_bar.textChanged.connect(self.filter_collection)
         controls_layout.addWidget(self.search_bar, stretch=2)
@@ -195,21 +197,24 @@ class CollectionWindow(QDialog):
         # Sort dropdown
         self.sort_combo = QComboBox()
         self.sort_combo.addItems(["Sort by Name", "Sort by Rarity", "Sort by Count"])
-        self.sort_combo.setStyleSheet("""
-            QComboBox {
-                background-color: rgba(255, 255, 255, 200);
-                border: 2px solid #3498db;
+        self.sort_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {UIColors.BG_LIGHT};
+                color: {UIColors.TEXT_DARK};
+                border: 2px solid {UIColors.BORDER_DEFAULT};
                 border-radius: 5px;
                 padding: 8px;
                 font-size: 12px;
-            }
-            QComboBox::drop-down {
+            }}
+            QComboBox::drop-down {{
                 border: none;
-            }
-            QComboBox QAbstractItemView {
-                background-color: white;
-                selection-background-color: #3498db;
-            }
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {UIColors.BG_LIGHT};
+                color: {UIColors.TEXT_DARK};
+                selection-background-color: {UIColors.BUTTON_SECONDARY};
+                selection-color: {UIColors.TEXT_PRIMARY};
+            }}
         """)
         self.sort_combo.currentIndexChanged.connect(self.sort_collection)
         controls_layout.addWidget(self.sort_combo, stretch=1)
@@ -219,36 +224,36 @@ class CollectionWindow(QDialog):
 
         # Collection count label
         self.count_label = QLabel("Total Shinies: 0")
-        self.count_label.setStyleSheet("""
-            QLabel {
-                color: white;
+        self.count_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 12px;
                 padding: 5px;
-            }
+            }}
         """)
         main_layout.addWidget(self.count_label)
 
         # Scrollable collection area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("""
-            QScrollArea {
+        scroll_area.setStyleSheet(f"""
+            QScrollArea {{
                 border: none;
                 background-color: transparent;
-            }
-            QScrollBar:vertical {
-                background-color: #34495e;
+            }}
+            QScrollBar:vertical {{
+                background-color: {UIColors.SCROLLBAR_BG};
                 width: 12px;
                 border-radius: 6px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #7f8c8d;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: {UIColors.SCROLLBAR_HANDLE};
                 border-radius: 6px;
                 min-height: 20px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background-color: #95a5a6;
-            }
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background-color: {UIColors.SCROLLBAR_HOVER};
+            }}
         """)
 
         # Collection grid container
@@ -262,22 +267,23 @@ class CollectionWindow(QDialog):
 
         # Close button
         close_button = QPushButton("Close")
-        close_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
+        close_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_SECONDARY};
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 13px;
                 font-weight: bold;
                 border: none;
                 border-radius: 5px;
                 padding: 10px 20px;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #21618c;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.PRIMARY_BLUE};
+            }}
+            QPushButton:pressed {{
+                background-color: {UIColors.PRIMARY_BLUE};
+                opacity: 0.8;
+            }}
         """)
         close_button.clicked.connect(self.close)
         main_layout.addWidget(close_button, alignment=Qt.AlignCenter)
@@ -329,13 +335,13 @@ class CollectionWindow(QDialog):
         if not self.filtered_data:
             empty_label = QLabel("No shiny Pokémon found yet.\nKeep hunting!" if not self.shiny_data
                                  else "No matching Pokémon found.")
-            empty_label.setStyleSheet("""
-                QLabel {
-                    color: #95a5a6;
+            empty_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {UIColors.TEXT_SECONDARY};
                     font-size: 16px;
                     font-style: italic;
                     padding: 50px;
-                }
+                }}
             """)
             empty_label.setAlignment(Qt.AlignCenter)
             self.collection_layout.addWidget(empty_label, 0, 0, 1, 3)

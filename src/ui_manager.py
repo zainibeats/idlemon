@@ -3,6 +3,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QMovie
+from ui_colors import UIColors
 
 
 class UIManager:
@@ -86,26 +87,26 @@ class UIManager:
         """Create the stats display panel"""
         stats_widget = QWidget()
         stats_widget.setFixedWidth(230)
-        stats_widget.setStyleSheet("""
-            QWidget {
-                background-color: rgba(0, 0, 0, 180);
+        stats_widget.setStyleSheet(f"""
+            QWidget {{
+                background-color: {UIColors.BG_DARK};
                 border-radius: 10px;
                 padding: 10px;
-            }
+            }}
         """)
         stats_layout = QVBoxLayout(stats_widget)
         stats_layout.setSpacing(5)
 
         # Info label
         self.info_label = QLabel("Walking through the Pokemon world...")
-        self.info_label.setStyleSheet("""
-            QLabel {
-                color: white;
+        self.info_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 12px;
                 font-weight: bold;
                 background: transparent;
                 padding: 5px;
-            }
+            }}
         """)
         self.info_label.setWordWrap(True)
         self.info_label.setFixedWidth(230)
@@ -114,29 +115,29 @@ class UIManager:
 
         # Encounter counter
         self.encounter_label = QLabel("Encounters: 0")
-        self.encounter_label.setStyleSheet("""
-            QLabel {
-                color: white;
+        self.encounter_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 11px;
                 background: transparent;
                 padding: 5px;
-            }
+            }}
         """)
         stats_layout.addWidget(self.encounter_label)
 
         # Shiny counter (clickable)
         self.shiny_label = QLabel("Shiny Pokémon Found: 0")
-        self.shiny_label.setStyleSheet("""
-            QLabel {
-                color: white;
+        self.shiny_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 11px;
                 background: transparent;
                 padding: 5px;
-            }
-            QLabel:hover {
-                color: #FFD700;
+            }}
+            QLabel:hover {{
+                color: {UIColors.TEXT_SHINY};
                 text-decoration: underline;
-            }
+            }}
         """)
         self.shiny_label.setCursor(Qt.PointingHandCursor)
         self.shiny_label.setToolTip("Click to view your shiny collection")
@@ -144,35 +145,36 @@ class UIManager:
 
         # Timer
         self.stats_label = QLabel("Time Elapsed: 00:00")
-        self.stats_label.setStyleSheet("""
-            QLabel {
-                color: white;
+        self.stats_label.setStyleSheet(f"""
+            QLabel {{
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 11px;
                 background: transparent;
                 padding: 5px;
-            }
+            }}
         """)
         stats_layout.addWidget(self.stats_label)
 
         # Settings button
         self.settings_button = QPushButton("⚙ Settings")
-        self.settings_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
+        self.settings_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_SECONDARY};
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 10px;
                 font-weight: bold;
                 border: none;
                 border-radius: 5px;
                 padding: 5px;
                 margin-top: 5px;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #21618c;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.PRIMARY_BLUE};
+            }}
+            QPushButton:pressed {{
+                background-color: {UIColors.PRIMARY_BLUE};
+                opacity: 0.8;
+            }}
         """)
         stats_layout.addWidget(self.settings_button)
 
@@ -200,22 +202,22 @@ class UIManager:
         self.continue_button.setFocusPolicy(Qt.NoFocus)
         self.continue_button.setAutoDefault(False)
         self.continue_button.setDefault(False)
-        self.continue_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2ecc71;
-                color: white;
+        self.continue_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {UIColors.BUTTON_PRIMARY};
+                color: {UIColors.TEXT_PRIMARY};
                 font-size: 14px;
                 font-weight: bold;
                 border: none;
                 border-radius: 20px;
                 padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #27ae60;
-            }
-            QPushButton:pressed {
-                background-color: #229954;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {UIColors.ACCENT_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {UIColors.ACCENT_PRESSED};
+            }}
         """)
         self.continue_button.hide()
         self.foreground_layout.addWidget(self.continue_button, alignment=Qt.AlignCenter)
@@ -261,25 +263,25 @@ class UIManager:
 
         if is_shiny:
             self.info_label.setText(f"{pokemon_name} - {rarity} (Shiny!)")
-            self.info_label.setStyleSheet("""
-                QLabel {
-                    color: gold;
+            self.info_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {UIColors.TEXT_SHINY};
                     font-size: 12px;
                     font-weight: bold;
                     background: transparent;
                     padding: 5px;
-                }
+                }}
             """)
         else:
             self.info_label.setText(f"{pokemon_name} - {rarity}")
-            self.info_label.setStyleSheet("""
-                QLabel {
-                    color: white;
+            self.info_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {UIColors.TEXT_PRIMARY};
                     font-size: 12px;
                     font-weight: bold;
                     background: transparent;
                     padding: 5px;
-                }
+                }}
             """)
 
     def update_encounter_count(self, count):
