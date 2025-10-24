@@ -18,8 +18,11 @@ class CollectionItemWidget(QWidget):
         self.rarity = rarity
         self.count = count
         self.gif_path = gif_path
+        self.movie = None  # Store movie reference for hover control
 
         self.setup_ui()
+        # Enable mouse tracking for hover events
+        self.setMouseTracking(True)
 
     def setup_ui(self):
         """Setup the collection item UI"""
@@ -47,21 +50,24 @@ class CollectionItemWidget(QWidget):
         self.gif_label.setFixedSize(120, 120)
         self.gif_label.setStyleSheet("background: transparent; border: none;")
 
-        # Load and display GIF
+        # Load GIF but don't animate until hover
         if self.gif_path and Path(self.gif_path).exists():
-            movie = QMovie(str(self.gif_path))
+            self.movie = QMovie(str(self.gif_path))
             # Scale the movie to fit nicely
-            original_size = movie.scaledSize()
+            original_size = self.movie.scaledSize()
             if original_size.width() > 0 and original_size.height() > 0:
                 scale_factor = min(100 / original_size.width(), 100 / original_size.height())
                 new_size = QSize(
                     int(original_size.width() * scale_factor),
                     int(original_size.height() * scale_factor)
                 )
-                movie.setScaledSize(new_size)
-            movie.setSpeed(100)
-            self.gif_label.setMovie(movie)
-            movie.start()
+                self.movie.setScaledSize(new_size)
+            self.movie.setSpeed(100)
+
+            # Show first frame as static image (don't animate until hover)
+            self.movie.jumpToFrame(0)
+            first_frame = self.movie.currentPixmap()
+            self.gif_label.setPixmap(first_frame)
         else:
             # Fallback if GIF not found
             self.gif_label.setText("?")
@@ -122,6 +128,22 @@ class CollectionItemWidget(QWidget):
 
         layout.addWidget(container)
         self.setFixedSize(150, 220)
+
+    def enterEvent(self, event):
+        """Start GIF animation when mouse enters the widget"""
+        if self.movie:
+            self.gif_label.setMovie(self.movie)
+            self.movie.start()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        """Stop GIF animation and return to first frame when mouse leaves"""
+        if self.movie:
+            self.movie.stop()
+            self.movie.jumpToFrame(0)
+            first_frame = self.movie.currentPixmap()
+            self.gif_label.setPixmap(first_frame)
+        super().leaveEvent(event)
 
 
 class CollectionWindow(QDialog):
