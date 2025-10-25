@@ -1,28 +1,20 @@
 # IdleMon - Automated Shiny Hunting Simulator
 
-This project simulates encountering Pokémon with a chance of finding shiny Pokémon. It features animated GIFs for Pokémon encounters, shiny tracking, encounter statistics, and customization options.
+Python Idle Game project that simulates encountering Pokémon with a chance of finding shiny Pokémon. Featuring animated GIFs for Pokémon encounters, shiny tracking, encounter statistics, and customization options.
 
-> **Note:** Looking for the Linux version? Check out the [Linux branch](https://github.com/zainibeats/idlemon/tree/linux)
+> *Looking for the Linux version? Check out the [Linux branch](https://github.com/zainibeats/idlemon/tree/linux)*
 
-![icon](assets/images/icon_png.png)
+![screenshot of shiny Giratina encounter](assets/images/giratina-screenshot.png)
 
 ## Features
-- **Encounter simulation:** Displays Pokémon with their respective rarities
-- **Shiny hunting:** Tracks total shinies found with a 1/2000 chance
-- **Animated sprites:** Shows normal and shiny Pokémon as animated GIFs
-- **Statistics tracking:** 
-  - Real-time encounter counter (resets after continuing from a shiny)
-  - Time elapsed tracker
-  - Total shinies found counter
-- **Sound effects:** 
-  - Shiny encounter notification
-  - Continue button confirmation
-  - Optional muting through config
-- **User-friendly customization:** Easily configure settings through a simple config.json file - no coding required!
-  - Choose your own background image
-  - Toggle sound effects on/off
+- **Shiny hunting simulator** with 1/2000 encounter rate and animated GIF sprites
+- **Shiny Collection window** to view, search, and sort all your caught shinies
+- **Desktop Pet Mode** - optional borderless transparent window with draggable Pokémon
+- **Statistics tracking** including encounter counter, timer, and total shinies found
+- **Sound effects** for shiny encounters and interactions
+- **Easy customization** through a built-in settings dialog
 
-![screenshot of shiny gyrados encounter](assets/images/screenshot_gyra.png)
+**→ See the [Features Guide](#features-guide) below for detailed information on all features**
 
 ---
 
@@ -70,7 +62,21 @@ The application is fully portable:
 ---
 
 ## Configuration
-The simulator can be customized using a `config.json` file placed in the same folder as the executable:
+
+### Settings Dialog (Recommended)
+The easiest way to configure IdleMon is through the built-in settings dialog:
+- **Normal Mode:** Click the ⚙ Settings button in the stats panel
+- **Desktop Pet Mode:** Right-click on the Pokémon and select "⚙ Settings"
+
+Available settings:
+- **Borderless Desktop Pet Mode:** Enable transparent window mode (requires restart)
+- **Mute Audio:** Disable all sound effects
+- **Background Image:** Choose a custom background image using the file browser
+
+Settings are automatically saved to `config.json`.
+
+### Manual Configuration (Advanced)
+For advanced users, you can also directly edit the `config.json` file placed in the same folder as the executable:
 
 ### Example `config.json`
 ```json
@@ -126,16 +132,52 @@ IdleMon/
 │   │   └── gen5_pokemon_names.txt
 │   └── images/
 │       └── background.png
-├── config.json (optional)
+├── config.json (can be edited via Settings dialog)
 └── logs/      (created automatically)
-    ├── shiny_count.bin
-    ├── shinies_encountered.txt
+    ├── shiny_count.bin         (total shiny count)
+    ├── shinies_encountered.txt (shiny collection data)
     └── error.log
 ```
 
 ---
 
 ## Features Guide
+
+### Shiny Collection
+Track and view all your shiny Pokémon in a dedicated collection window:
+
+**Opening the Collection:**
+- Click on the "Shiny Pokémon Found: X" counter in normal mode
+- Right-click on the Pokémon (in either mode) and select "View Collection"
+
+**Collection Features:**
+- **Grid Display:** View all your shinies in a 4-column grid
+- **Hover Animations:** GIFs animate when you hover over them
+- **Search:** Filter Pokémon by name using the search bar
+- **Sort Options:**
+  - By Name (alphabetical)
+  - By Rarity (Very Rare → Very Common)
+  - By Count (most duplicates first)
+- **Statistics:** See total shinies caught and unique species count
+- **Duplicate Tracking:** Badges show "x2", "x3", etc. for multiple catches of the same Pokémon
+
+### Desktop Pet Mode
+Enable borderless mode for a transparent desktop companion:
+
+**How to Enable:**
+1. Open Settings (⚙ button or right-click menu)
+2. Enable "Borderless Desktop Pet Mode"
+3. Restart the application
+
+**Features:**
+- Transparent, frameless window showing only the Pokémon
+- Drag the Pokémon anywhere on your screen
+- Right-click for context menu:
+  - View Collection
+  - Settings
+  - Continue Hunt (after finding a shiny)
+  - Exit IdleMon
+- System tray icon for easy exit
 
 ### Encounter System
 - Each encounter has a chance of being shiny (1/2000 by default)
@@ -151,13 +193,14 @@ IdleMon/
 ### Sound System
 - Shiny encounters trigger a special sound effect
 - Continue button plays a confirmation sound
-- Optional muting through config.json
+- Optional muting through settings menu or config.json
 
 ### Statistics Tracking
 - Real-time encounter counter (resets after continuing from a shiny)
 - Elapsed time tracker
-- Total shiny Pokémon found
-- Automatic data saving for shiny counts
+- Total shiny Pokémon found (clickable to view collection)
+- Automatic data saving for shiny counts and collection data
+- Persistent collection history with rarity and duplicate tracking
 
 ### Resetting Progress
 To reset your hunting progress, you can either:
@@ -178,9 +221,24 @@ New files will be automatically created when you next run the program.
 ## Troubleshooting
 - **Missing GIFs:** Ensure GIF files exist in the correct generation's normal/shiny directories
 - **Animation Issues:** Verify GIF files are properly formatted
-- **Sound Problems:** Check that sound files exist in the assets/sounds directory
-- **Background Image:** Ensure the specified path exists and is accessible
-- **config.json:** Ensure the config.json file is correctly formatted and all paths are valid
+- **Sound Problems:**
+  - Check that sound files exist in the assets/sounds directory
+  - Verify audio is not muted in Settings
+- **Background Image:**
+  - Use the Settings dialog to browse for valid image files
+  - Ensure the specified path exists and is accessible
+- **Shiny Collection Not Loading:**
+  - Check that `logs/shinies_encountered.txt` exists and is not corrupted
+  - File format should be: `pokemon_name | rarity | count`
+- **Application Not starting:**
+  - First, make sure you are running the EXE from the [project root](#portable-directory-structure)
+  - Close any instances of Idlemon in Task Manager
+  - If all else fails, delete the `logs` directory in your IdleMon folder. This _WILL_ reset all data!!
+- **Desktop Pet Mode Issues:**
+  - Requires restart to enable/disable
+  - May not work on all systems (requires system tray support)
+  - Use right-click context menu to access features
+  - Ensure the `config.json` file is correctly formatted (or use Settings dialog instead)
 
 ---
 
