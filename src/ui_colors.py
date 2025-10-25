@@ -44,7 +44,7 @@ class UIColors:
     BUTTON_DANGER = "#F44336"     # Bright red for destructive actions
 
     # Count badge
-    BADGE_BG = "#F44336"          # Vibrant red badge
+    BADGE_BG = "#66BB6A"          # Lighter green red badge
 
     # Group box borders (for settings)
     GROUP_DISPLAY = "#8B7BA8"     # Vibrant purple for display settings
