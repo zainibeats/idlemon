@@ -7,6 +7,7 @@ Python Idle Game project that simulates encountering Pokémon with a chance of f
 ![screenshot of shiny Giratina encounter](assets/images/giratina-screenshot.png)
 
 ## Features
+
 - **Shiny hunting simulator** with 1/2000 encounter rate and animated GIF sprites
 - **Shiny Collection window** to view, search, and sort all your caught shinies
 - **Desktop Pet Mode** - optional borderless transparent window with draggable Pokémon
@@ -14,130 +15,21 @@ Python Idle Game project that simulates encountering Pokémon with a chance of f
 - **Sound effects** for shiny encounters and interactions
 - **Easy customization** through a built-in settings dialog
 
-**→ See the [Features Guide](#features-guide) below for detailed information on all features**
-
 ---
 
-## Requirements
-For building from source:
-- Python 3.8 or later
-- Required libraries listed in requirements.txt
+## Quick Start
 
-Install dependencies:
-```bash
-# Using pip (Windows/Linux)
-pip install -r requirements.txt
+### Windows Users
+1. Download the latest release from the releases page
+2. Extract the zip file
+3. Run `IdleMon.exe`
 
-# Or if you have multiple Python versions
-python -m pip install -r requirements.txt
-```
-
----
-
-## Usage
-
-### Windows Portable Version
-1. Download the latest release
-2. Extract the zip file anywhere you like
-3. Run `IdleMon.exe` from the extracted folder
-
-The application is fully portable:
-- Can be run from any location
-- All data is stored in the application folder
-- No installation required
-- No system modifications
-
-### Building from Source (Windows)
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-3. Build the executable:
-   ```bash
-   pyinstaller main.spec
-   ```
-4. The portable version will be created in `dist/IdleMon`
-
----
-
-## Configuration
-
-### Settings Dialog (Recommended)
-The easiest way to configure IdleMon is through the built-in settings dialog:
-- **Normal Mode:** Click the ⚙ Settings button in the stats panel
-- **Desktop Pet Mode:** Right-click on the Pokémon and select "⚙ Settings"
-
-Available settings:
-- **Borderless Desktop Pet Mode:** Enable transparent window mode (requires restart)
-- **Mute Audio:** Disable all sound effects
-- **Background Image:** Choose a custom background image using the file browser
-
-Settings are automatically saved to `config.json`.
-
-### Manual Configuration (Advanced)
-For advanced users, you can also directly edit the `config.json` file placed in the same folder as the executable:
-
-### Example `config.json`
-```json
-# Using absolute path:
-{
-    "background_image": "C:/Users/YourName/Pictures/custom_background.png",
-    "mute_audio": false
-}
-
-# OR using relative path (relative to IdleMon.exe):
-{
-    "background_image": "assets/images/my_background.jpg",
-    "mute_audio": false
-}
-```
-
-### Key Settings
-- **`background_image`:** Path to background image. Can be:
-  - Absolute path (e.g., "C:/Users/YourName/Pictures/custom_background.png")
-  - Relative path from IdleMon.exe (e.g., "assets/images/my_background.jpg")
-  - Defaults to included background if not found
-- **`mute_audio`:** Set to `true` to disable all sound effects (default: `false`)
-
-### Portable Directory Structure
-```
-IdleMon/
-├── IdleMon.exe
-├── assets/
-│   ├── gifs/
-│   │   ├── gen1/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen2/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen3/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen4/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   └── gen5/
-│   │       ├── normal/
-│   │       └── shiny/
-│   ├── sounds/
-│   │   ├── shiny_sound1.wav
-│   │   └── continue_sound1.wav
-│   ├── data/
-│   │   ├── gen1_pokemon_names.txt
-│   │   ├── gen2_pokemon_names.txt
-│   │   ├── gen3_pokemon_names.txt
-│   │   ├── gen4_pokemon_names.txt
-│   │   └── gen5_pokemon_names.txt
-│   └── images/
-│       └── background.png
-├── config.json (can be edited via Settings dialog)
-└── logs/      (created automatically)
-    ├── shiny_count.bin         (total shiny count)
-    ├── shinies_encountered.txt (shiny collection data)
-    └── error.log
-```
+### Developers
+See the **[Development Guide](docs/development.md)** for:
+- Installing dependencies
+- Running from source
+- Building executables
+- Project structure
 
 ---
 
@@ -218,6 +110,47 @@ New files will be automatically created when you next run the program.
 
 ---
 
+## Configuration
+
+### Settings Dialog (Recommended)
+The easiest way to configure IdleMon is through the built-in settings dialog:
+- **Normal Mode:** Click the ⚙ Settings button in the stats panel
+- **Desktop Pet Mode:** Right-click on the Pokémon and select "⚙ Settings"
+
+Available settings:
+- **Borderless Desktop Pet Mode:** Enable transparent window mode (requires restart)
+- **Mute Audio:** Disable all sound effects
+- **Background Image:** Choose a custom background image using the file browser
+
+Settings are automatically saved to `config.json`.
+
+### Manual Configuration (Advanced)
+For advanced users, you can also directly edit the `config.json` file placed in the same folder as the executable:
+
+### Example `config.json`
+```json
+# Using absolute path:
+{
+    "background_image": "C:/Users/YourName/Pictures/custom_background.png",
+    "mute_audio": false
+}
+
+# OR using relative path (relative to IdleMon.exe):
+{
+    "background_image": "assets/images/my_background.jpg",
+    "mute_audio": false
+}
+```
+
+### Key Settings
+- **`background_image`:** Path to background image. Can be:
+  - Absolute path (e.g., "C:/Users/YourName/Pictures/custom_background.png")
+  - Relative path from IdleMon.exe (e.g., "assets/images/my_background.jpg")
+  - Defaults to included background if not found
+- **`mute_audio`:** Set to `true` to disable all sound effects (default: `false`)
+
+---
+
 ## Troubleshooting
 - **Missing GIFs:** Ensure GIF files exist in the correct generation's normal/shiny directories
 - **Animation Issues:** Verify GIF files are properly formatted
@@ -231,7 +164,7 @@ New files will be automatically created when you next run the program.
   - Check that `logs/shinies_encountered.txt` exists and is not corrupted
   - File format should be: `pokemon_name | rarity | count`
 - **Application Not starting:**
-  - First, make sure you are running the EXE from the [project root](#portable-directory-structure)
+  - First, make sure you are running the EXE from the [project root](docs/development.md#portable-directory-structure)
   - Close any instances of Idlemon in Task Manager
   - If all else fails, delete the `logs` directory in your IdleMon folder. This _WILL_ reset all data!!
 - **Desktop Pet Mode Issues:**
