@@ -1,9 +1,27 @@
 """UI management module for Qt interface"""
 from pathlib import Path
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu, QHBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QMovie
 from ui_colors import UIColors
+from utils import find_pokemon_gif
+
+# UI Constants
+GIF_SCALE_FACTOR = 1.5
+GIF_ANIMATION_SPEED = 100
+BORDERLESS_WINDOW_SIZE = 200
+STATS_PANEL_WIDTH = 230
+BACKGROUND_HEIGHT = 500
+
+
+class ClickableLabel(QLabel):
+    """QLabel that emits a clicked signal when clicked"""
+    clicked = Signal()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
 
 
 class UIManager:
@@ -50,14 +68,14 @@ class UIManager:
             self._create_pokemon_display()
 
             # Set default window size for borderless mode
-            self.window.resize(200, 200)
+            self.window.resize(BORDERLESS_WINDOW_SIZE, BORDERLESS_WINDOW_SIZE)
 
-            return 200, 200
+            return BORDERLESS_WINDOW_SIZE, BORDERLESS_WINDOW_SIZE
         else:
             # Normal mode: background image with stats
             # Load and scale background
             background_pixmap = QPixmap(str(self.background_path))
-            background_pixmap = background_pixmap.scaledToHeight(500, Qt.SmoothTransformation)
+            background_pixmap = background_pixmap.scaledToHeight(BACKGROUND_HEIGHT, Qt.SmoothTransformation)
 
             # Create central widget with background
             central_widget = QLabel()
@@ -86,7 +104,7 @@ class UIManager:
     def _create_stats_panel(self):
         """Create the stats display panel"""
         stats_widget = QWidget()
-        stats_widget.setFixedWidth(230)
+        stats_widget.setFixedWidth(STATS_PANEL_WIDTH)
         stats_widget.setStyleSheet(f"""
             QWidget {{
                 background-color: {UIColors.BG_DARK};
@@ -109,7 +127,7 @@ class UIManager:
             }}
         """)
         self.info_label.setWordWrap(True)
-        self.info_label.setFixedWidth(230)
+        self.info_label.setFixedWidth(STATS_PANEL_WIDTH)
         self.info_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         stats_layout.addWidget(self.info_label)
 
@@ -126,7 +144,7 @@ class UIManager:
         stats_layout.addWidget(self.encounter_label)
 
         # Shiny counter (clickable)
-        self.shiny_label = QLabel("Shiny Pokémon Found: 0")
+        self.shiny_label = ClickableLabel("Shiny Pokémon Found: 0")
         self.shiny_label.setStyleSheet(f"""
             QLabel {{
                 color: {UIColors.TEXT_PRIMARY};
@@ -231,15 +249,7 @@ class UIManager:
             pokemon_name: Name of Pokemon
             is_shiny: Whether to show shiny version
         """
-        gif_subdir = "shiny" if is_shiny else "normal"
-
-        # Find GIF in generation directories
-        gif_path = None
-        for gen in range(1, 6):
-            test_path = self.project_root / "assets" / "gifs" / f"gen{gen}" / gif_subdir / f"{pokemon_name}.gif"
-            if test_path.exists():
-                gif_path = test_path
-                break
+        gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny)
 
         if not gif_path:
             print(f"GIF file not found for {pokemon_name}")
@@ -247,8 +257,8 @@ class UIManager:
 
         # Create and setup QMovie
         movie = QMovie(str(gif_path))
-        movie.setScaledSize(movie.scaledSize() * 1.5)
-        movie.setSpeed(100)
+        movie.setScaledSize(movie.scaledSize() * GIF_SCALE_FACTOR)
+        movie.setSpeed(GIF_ANIMATION_SPEED)
 
         self.pokemon_label.setMovie(movie)
         movie.start()
@@ -351,4 +361,4 @@ class UIManager:
             callback: Function to call when shiny label is clicked
         """
         if not self.borderless_mode and self.shiny_label:
-            self.shiny_label.mousePressEvent = lambda event: callback() if event.button() == Qt.LeftButton else None
+            self.shiny_label.clicked.connect(callback)
