@@ -31,7 +31,8 @@ class IdleMonWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("IdleMon")
 
-        # Store borderless mode setting
+        # Store config and settings
+        self.config = config
         self.borderless_mode = config["borderless_mode"]
         self.shiny_paused = False  # Track if hunt is paused due to shiny
         self.collection_window = None  # Track collection window instance
@@ -181,27 +182,18 @@ class IdleMonWindow(QMainWindow):
 
     def on_settings_changed(self, new_config):
         """Handle settings changes"""
-        # Update global config (shallow update for immediate changes)
-        global config
-
         # Apply immediate changes (things that don't require restart)
-        if 'mute_audio' in new_config and new_config['mute_audio'] != config.get('mute_audio'):
-            # Update audio manager
+        if 'mute_audio' in new_config and new_config['mute_audio'] != self.config.get('mute_audio'):
             self.audio.set_mute(new_config['mute_audio'])
-            config['mute_audio'] = new_config['mute_audio']
+            self.config['mute_audio'] = new_config['mute_audio']
 
-        if 'encounter_delay' in new_config and new_config['encounter_delay'] != config.get('encounter_delay'):
-            # Update game controller's encounter delay
+        if 'encounter_delay' in new_config and new_config['encounter_delay'] != self.config.get('encounter_delay'):
             self.game.encounter_delay = new_config['encounter_delay']
-            config['encounter_delay'] = new_config['encounter_delay']
+            self.config['encounter_delay'] = new_config['encounter_delay']
 
-        if 'shiny_rate' in new_config and new_config['shiny_rate'] != config.get('shiny_rate'):
-            # Update game controller's shiny rate
+        if 'shiny_rate' in new_config and new_config['shiny_rate'] != self.config.get('shiny_rate'):
             self.game.shiny_rate = new_config['shiny_rate']
-            config['shiny_rate'] = new_config['shiny_rate']
-
-        # Note: background_image and borderless_mode require restart
-        # These are already handled by the dialog showing a restart message
+            self.config['shiny_rate'] = new_config['shiny_rate']
 
     def mousePressEvent(self, event):
         """Handle mouse press for dragging in borderless mode"""
