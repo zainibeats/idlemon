@@ -5,8 +5,7 @@ class UIColors:
     Pokemon-inspired color palette with muted tones.
     Designed to work with green backgrounds while maintaining good visibility.
     """
-
-# Primary colors - Bold and saturated
+    # Primary colors - Bold and saturated
     PRIMARY_BLUE = "#2196F3"      # Bright blue
     PRIMARY_RED = "#F44336"       # Vibrant red
     PRIMARY_YELLOW = "#FFC107"    # Bright yellow/gold
