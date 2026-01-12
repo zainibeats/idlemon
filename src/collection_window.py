@@ -7,6 +7,19 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QMovie, QPixmap
 from ui_colors import UIColors
+from utils import find_pokemon_gif
+
+# Collection display constants
+ITEM_WIDTH = 150
+ITEM_HEIGHT = 220
+GIF_SIZE = 120
+GIF_DISPLAY_SIZE = 100
+GRID_SPACING = 15
+SCROLL_MARGIN = 20
+MIN_COLUMNS = 1
+MAX_COLUMNS = 8
+DEFAULT_COLUMNS = 4
+GIF_ANIMATION_SPEED = 100
 
 
 class CollectionItemWidget(QWidget):
@@ -47,7 +60,7 @@ class CollectionItemWidget(QWidget):
         # Pokemon GIF
         self.gif_label = QLabel()
         self.gif_label.setAlignment(Qt.AlignCenter)
-        self.gif_label.setFixedSize(120, 120)
+        self.gif_label.setFixedSize(GIF_SIZE, GIF_SIZE)
         self.gif_label.setStyleSheet("background: transparent; border: none;")
 
         # Load GIF but don't animate until hover
@@ -56,13 +69,13 @@ class CollectionItemWidget(QWidget):
             # Scale the movie to fit nicely
             original_size = self.movie.scaledSize()
             if original_size.width() > 0 and original_size.height() > 0:
-                scale_factor = min(100 / original_size.width(), 100 / original_size.height())
+                scale_factor = min(GIF_DISPLAY_SIZE / original_size.width(), GIF_DISPLAY_SIZE / original_size.height())
                 new_size = QSize(
                     int(original_size.width() * scale_factor),
                     int(original_size.height() * scale_factor)
                 )
                 self.movie.setScaledSize(new_size)
-            self.movie.setSpeed(100)
+            self.movie.setSpeed(GIF_ANIMATION_SPEED)
 
             # Show first frame as static image (don't animate until hover)
             self.movie.jumpToFrame(0)
@@ -127,7 +140,7 @@ class CollectionItemWidget(QWidget):
             container_layout.addWidget(count_label, alignment=Qt.AlignCenter)
 
         layout.addWidget(container)
-        self.setFixedSize(150, 220)
+        self.setFixedSize(ITEM_WIDTH, ITEM_HEIGHT)
 
     def enterEvent(self, event):
         """Start GIF animation when mouse enters the widget"""
@@ -282,7 +295,7 @@ class CollectionWindow(QDialog):
         # Collection grid container
         self.collection_widget = QWidget()
         self.collection_layout = QGridLayout(self.collection_widget)
-        self.collection_layout.setSpacing(15)
+        self.collection_layout.setSpacing(GRID_SPACING)
         self.collection_layout.setContentsMargins(10, 10, 10, 10)
 
         self.scroll_area.setWidget(self.collection_widget)
@@ -335,31 +348,26 @@ class CollectionWindow(QDialog):
 
     def find_shiny_gif(self, pokemon_name):
         """Find the shiny GIF path for a Pokemon"""
-        for gen in range(1, 6):
-            gif_path = self.project_root / "assets" / "gifs" / f"gen{gen}" / "shiny" / f"{pokemon_name}.gif"
-            if gif_path.exists():
-                return str(gif_path)
-        return None
+        gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny=True)
+        return str(gif_path) if gif_path else None
 
     def calculate_columns(self):
         """Calculate optimal number of columns based on available width"""
         if not self.scroll_area:
-            return 4  # Default fallback
+            return DEFAULT_COLUMNS
 
         # Get available width (accounting for scrollbar and margins)
-        available_width = self.scroll_area.viewport().width() - 20  # Subtract margins
+        available_width = self.scroll_area.viewport().width() - SCROLL_MARGIN
 
-        # Each item is 150px wide + 15px spacing
-        item_width = 150
-        spacing = 15
-        total_item_width = item_width + spacing
+        # Each item includes width + spacing
+        total_item_width = ITEM_WIDTH + GRID_SPACING
 
-        # Calculate how many fit, minimum 1, maximum reasonable is around 8
-        columns = max(1, min(int(available_width / (item_width + spacing)), 8))
+        # Calculate how many fit within min/max bounds
+        columns = max(MIN_COLUMNS, min(int(available_width / total_item_width), MAX_COLUMNS))
 
-        # Fallback to 4 columns if calculation fails
-        if columns < 1:
-            columns = 4
+        # Fallback to default if calculation fails
+        if columns < MIN_COLUMNS:
+            columns = DEFAULT_COLUMNS
 
         return columns
 
