@@ -195,7 +195,8 @@ class SettingsDialog(QDialog):
                     except ValueError:
                         # Can't make relative, use absolute
                         pass
-            except:
+            except (ImportError, OSError):
+                # If we can't import PROJECT_ROOT or path operations fail, use as-is
                 pass
         self.inputs['background_image'].setText(bg_path)
 
@@ -219,7 +220,8 @@ class SettingsDialog(QDialog):
                 except ValueError:
                     # Can't make relative, use absolute
                     self.inputs['background_image'].setText(file_path)
-            except:
+            except (ImportError, OSError):
+                # If we can't import PROJECT_ROOT or path operations fail, use absolute
                 self.inputs['background_image'].setText(file_path)
 
     def _save_settings(self):
