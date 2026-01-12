@@ -57,7 +57,6 @@ class LogManager:
                     f.write(f"{name} | {data['rarity']} | {data['count']}\n")
         except Exception as e:
             self.error_logger.error(f"Error writing to shiny log: {str(e)}")
-            return True  # Return success even if logging failed
 
     def get_all_shinies(self):
         """
