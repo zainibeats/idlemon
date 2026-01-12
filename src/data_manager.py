@@ -2,7 +2,7 @@
 import os
 import base64
 from pathlib import Path
-from config_loader import get_base_path, POKEMON_DATA_HASHES
+from config_loader import get_base_path, validate_pokemon_data_file
 from logger import logger
 
 
@@ -50,19 +50,10 @@ class DataManager:
 
     def validate_pokemon_data(self, gen, file_path):
         """Verify Pokemon data file integrity using SHA-256 hash"""
-        import hashlib
-        
-        if not os.path.exists(file_path):
-            logger.log_error(f"Error: {file_path} not found.")
-            return False
-            
-        with open(file_path, "rb") as file:
-            file_hash = hashlib.sha256(file.read()).hexdigest()
-            
-        if file_hash != POKEMON_DATA_HASHES.get(gen, ""):
-            logger.log_error(f"Warning: {file_path} may have been modified. Hash verification failed.")
-            return False
-        return True
+        is_valid = validate_pokemon_data_file(gen, file_path)
+        if not is_valid:
+            logger.log_error(f"Pokemon data validation failed for {gen}: {file_path}")
+        return is_valid
 
     def load_pokemon_data(self):
         """Load and cache Pokemon data from all generation files"""

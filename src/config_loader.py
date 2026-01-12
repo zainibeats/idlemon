@@ -35,6 +35,28 @@ POKEMON_DATA_HASHES = {
     "gen5": "35f7fbd7e12604d46517389f8d1133f06e67d93b3dbe4fc6b894f26b658c0f73"
 }
 
+
+def validate_pokemon_data_file(gen, file_path):
+    """
+    Verify Pokemon data file integrity using SHA-256 hash
+
+    Args:
+        gen: Generation identifier (e.g., "gen1", "gen2")
+        file_path: Path to the data file
+
+    Returns:
+        bool: True if validation passes, False otherwise
+    """
+    import hashlib
+
+    if not os.path.exists(file_path):
+        return False
+
+    with open(file_path, "rb") as file:
+        file_hash = hashlib.sha256(file.read()).hexdigest()
+
+    return file_hash == POKEMON_DATA_HASHES.get(gen, "")
+
 # Default configuration settings
 DEFAULT_CONFIG = {
     # Gameplay settings
@@ -83,23 +105,11 @@ class ConfigManager:
         (PROJECT_ROOT / "assets/images").mkdir(parents=True, exist_ok=True)
         (PROJECT_ROOT / "assets/sounds").mkdir(parents=True, exist_ok=True)
 
-    def validate_pokemon_data(self, file_path):
+    def validate_pokemon_data(self, gen, file_path):
         """Verify Pokemon data file integrity using SHA-256 hash"""
-        import hashlib
-        
-        gen = os.path.basename(file_path).split('_')[0]  # Get generation from filename
-        if not os.path.exists(file_path):
-            print(f"Error: {file_path} not found. Please ensure all Pokemon data files are present.")
+        if not validate_pokemon_data_file(gen, file_path):
+            print(f"Error: {file_path} validation failed. Please ensure the file exists and has not been modified.")
             sys.exit(1)
-            
-        with open(file_path, "rb") as file:
-            file_hash = hashlib.sha256(file.read()).hexdigest()
-            
-        if file_hash != POKEMON_DATA_HASHES[gen]:
-            print(f"Warning: {file_path} may have been modified. Hash verification failed.")
-            print(f"Expected hash: {POKEMON_DATA_HASHES[gen]}")
-            print(f"Actual hash: {file_hash}")
-            sys.exit(1)  # Exit on hash mismatch
             
     def load_config(self):
         """Load configuration from file or use defaults"""
@@ -129,8 +139,8 @@ class ConfigManager:
             }
 
         # Verify all Pokemon data files
-        for file_path in config["pokemon_data_files"].values():
-            self.validate_pokemon_data(file_path)
+        for gen, file_path in config["pokemon_data_files"].items():
+            self.validate_pokemon_data(gen, file_path)
 
         return config
 
