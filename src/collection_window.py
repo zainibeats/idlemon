@@ -155,6 +155,7 @@ class CollectionWindow(QDialog):
         self.project_root = Path(project_root)
         self.shiny_data = []
         self.filtered_data = []
+        self.scroll_area = None  # Store reference for width calculation
 
         self.setWindowTitle("Shiny Pokémon Collection")
         self.setModal(False)
@@ -256,9 +257,9 @@ class CollectionWindow(QDialog):
         main_layout.addWidget(self.count_label)
 
         # Scrollable collection area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet(f"""
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet(f"""
             QScrollArea {{
                 border: none;
                 background-color: transparent;
@@ -284,8 +285,8 @@ class CollectionWindow(QDialog):
         self.collection_layout.setSpacing(15)
         self.collection_layout.setContentsMargins(10, 10, 10, 10)
 
-        scroll_area.setWidget(self.collection_widget)
-        main_layout.addWidget(scroll_area)
+        self.scroll_area.setWidget(self.collection_widget)
+        main_layout.addWidget(self.scroll_area)
 
         # Close button
         close_button = QPushButton("Close")
@@ -340,6 +341,28 @@ class CollectionWindow(QDialog):
                 return str(gif_path)
         return None
 
+    def calculate_columns(self):
+        """Calculate optimal number of columns based on available width"""
+        if not self.scroll_area:
+            return 4  # Default fallback
+
+        # Get available width (accounting for scrollbar and margins)
+        available_width = self.scroll_area.viewport().width() - 20  # Subtract margins
+
+        # Each item is 150px wide + 15px spacing
+        item_width = 150
+        spacing = 15
+        total_item_width = item_width + spacing
+
+        # Calculate how many fit, minimum 1, maximum reasonable is around 8
+        columns = max(1, min(int(available_width / (item_width + spacing)), 8))
+
+        # Fallback to 4 columns if calculation fails
+        if columns < 1:
+            columns = 4
+
+        return columns
+
     def update_collection_display(self):
         """Update the collection grid display"""
         # Clear existing items
@@ -369,8 +392,8 @@ class CollectionWindow(QDialog):
             self.collection_layout.addWidget(empty_label, 0, 0, 1, 3)
             return
 
-        # Add collection items to grid
-        columns = 4
+        # Add collection items to grid with dynamic columns
+        columns = self.calculate_columns()
         for index, shiny in enumerate(self.filtered_data):
             row = index // columns
             col = index % columns
@@ -417,3 +440,10 @@ class CollectionWindow(QDialog):
 
         # Reapply filter after sorting
         self.filter_collection()
+
+    def resizeEvent(self, event):
+        """Handle window resize to recalculate grid layout"""
+        super().resizeEvent(event)
+        # Only update if we have data to display
+        if self.filtered_data:
+            self.update_collection_display()
