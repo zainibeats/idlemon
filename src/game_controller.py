@@ -7,6 +7,9 @@ from PySide6.QtCore import QObject, Signal
 
 from logger import logger
 
+# Game constants
+NEARBY_SHINY_HINT_DIVISOR = 5  # 1 in (shiny_rate // 5) chance to show nearby hint
+
 
 class GameSignals(QObject):
     """Signals for thread-safe UI updates"""
@@ -64,11 +67,14 @@ class GameController:
         Returns:
             bool: True if shiny encounter
         """
-        shiny_value = random.randint(1, self.shiny_rate)
-        if shiny_value == 1:
+        if random.randint(1, self.shiny_rate) == 1:
             return True
-        elif random.randint(1, self.shiny_rate // 5) == 1:
+
+        # Easter egg: occasionally hint that a shiny is nearby
+        hint_rate = max(1, self.shiny_rate // NEARBY_SHINY_HINT_DIVISOR)
+        if random.randint(1, hint_rate) == 1:
             print(Fore.MAGENTA + "You hear a shiny Pokémon nearby..." + Style.RESET_ALL)
+
         return False
 
     def start_timer(self):
@@ -91,11 +97,10 @@ class GameController:
     def _update_timer_loop(self):
         """Timer update loop (runs in background thread)"""
         while self.timer_running:
-            if self.start_time is not None:
-                self.elapsed_time += time.time() - self.start_time
-                self.start_time = time.time()
-            self.signals.update_timer.emit(int(self.elapsed_time))
             time.sleep(1)
+            if self.start_time is not None:
+                self.elapsed_time = int(time.time() - self.start_time)
+                self.signals.update_timer.emit(self.elapsed_time)
 
     def reset_encounters(self):
         """Reset encounter counter"""
