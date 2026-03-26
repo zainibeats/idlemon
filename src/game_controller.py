@@ -2,10 +2,7 @@
 import random
 import time
 import threading
-from colorama import Fore, Style
 from PySide6.QtCore import QObject, Signal
-
-from logger import logger
 
 # Game constants
 NEARBY_SHINY_HINT_DIVISOR = 5  # 1 in (shiny_rate // 5) chance to show nearby hint
@@ -22,16 +19,18 @@ class GameSignals(QObject):
 class GameController:
     """Controls game logic, state, and encounter system"""
 
-    def __init__(self, config, data_manager):
+    def __init__(self, config, data_manager, logger):
         """
         Initialize game controller
 
         Args:
             config: Game configuration dictionary
             data_manager: DataManager instance
+            logger: LogManager instance
         """
         self.config = config
         self.data_manager = data_manager
+        self.logger = logger
 
         # Game settings
         self.encounter_delay = config["encounter_delay"]
@@ -73,7 +72,7 @@ class GameController:
         # Easter egg: occasionally hint that a shiny is nearby
         hint_rate = max(1, self.shiny_rate // NEARBY_SHINY_HINT_DIVISOR)
         if random.randint(1, hint_rate) == 1:
-            print(Fore.MAGENTA + "You hear a shiny Pokémon nearby..." + Style.RESET_ALL)
+            print("You hear a shiny Pokémon nearby...")
 
         return False
 
@@ -143,7 +142,7 @@ class GameController:
                 self.shiny_found_flag = True
                 self.stop_timer()
                 self.signals.shiny_found.emit(pokemon_name, pokemon_rarity)
-                print(Fore.YELLOW + f"Congrats!!! You found a shiny {pokemon_name} after {self.total_encounters} encounters!" + Style.RESET_ALL)
+                print(f"Congrats!!! You found a shiny {pokemon_name} after {self.total_encounters} encounters!")
             else:
                 print(f"You encountered a wild {pokemon_name}!")
 
@@ -160,6 +159,6 @@ class GameController:
 
         # Log the shiny
         try:
-            logger.log_shiny(pokemon_name, rarity)
+            self.logger.log_shiny(pokemon_name, rarity)
         except Exception as e:
-            logger.log_error(f"Error logging shiny: {str(e)}")
+            self.logger.log_error(f"Error logging shiny: {str(e)}")

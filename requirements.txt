@@ -1,4 +1,2 @@
-PySide6>=6.6.0     # Modern Qt6 GUI framework
-Pillow>=10.0.0     # For image handling (still needed for some image operations)
-colorama>=0.4.6    # For colored terminal output
-pyinstaller>=6.0.0 # For creating the executable (build only) 
+PySide6>=6.8.0      # Qt6 GUI framework (requires Python 3.9+)
+pyinstaller>=6.11.0  # For creating the executable (build only)

@@ -3,8 +3,7 @@ import json
 from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QCheckBox, QDoubleSpinBox, QSpinBox, QFileDialog, QLineEdit,
-    QGroupBox, QMessageBox
+    QCheckBox, QFileDialog, QLineEdit, QGroupBox, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal
 from ui_colors import UIColors
@@ -15,18 +14,20 @@ class SettingsDialog(QDialog):
 
     settings_changed = Signal(dict)  # Emits new config when saved
 
-    def __init__(self, current_config, config_file_path, parent=None):
+    def __init__(self, current_config, config_file_path, project_root, parent=None):
         """
         Initialize settings dialog
 
         Args:
             current_config: Current configuration dict
             config_file_path: Path to config.json file
+            project_root: Project root path for resolving relative paths
             parent: Parent widget
         """
         super().__init__(parent)
         self.current_config = current_config
         self.config_file_path = Path(config_file_path)
+        self.project_root = Path(project_root)
         self.setWindowTitle("IdleMon Settings")
         self.setModal(True)
         self.setMinimumWidth(500)
@@ -185,19 +186,12 @@ class SettingsDialog(QDialog):
         # Get relative path for display if possible
         bg_path = self.current_config.get('background_image', '')
         if bg_path:
-            try:
-                # Try to make it relative to project root for cleaner display
-                from config_loader import PROJECT_ROOT
-                bg_path_obj = Path(bg_path)
-                if bg_path_obj.is_absolute():
-                    try:
-                        bg_path = str(bg_path_obj.relative_to(PROJECT_ROOT))
-                    except ValueError:
-                        # Can't make relative, use absolute
-                        pass
-            except (ImportError, OSError):
-                # If we can't import PROJECT_ROOT or path operations fail, use as-is
-                pass
+            bg_path_obj = Path(bg_path)
+            if bg_path_obj.is_absolute():
+                try:
+                    bg_path = str(bg_path_obj.relative_to(self.project_root))
+                except ValueError:
+                    pass
         self.inputs['background_image'].setText(bg_path)
 
     def _browse_background(self):
@@ -211,17 +205,11 @@ class SettingsDialog(QDialog):
 
         if file_path:
             # Try to make path relative to project root
+            file_path_obj = Path(file_path)
             try:
-                from config_loader import PROJECT_ROOT
-                file_path_obj = Path(file_path)
-                try:
-                    relative_path = str(file_path_obj.relative_to(PROJECT_ROOT))
-                    self.inputs['background_image'].setText(relative_path)
-                except ValueError:
-                    # Can't make relative, use absolute
-                    self.inputs['background_image'].setText(file_path)
-            except (ImportError, OSError):
-                # If we can't import PROJECT_ROOT or path operations fail, use absolute
+                relative_path = str(file_path_obj.relative_to(self.project_root))
+                self.inputs['background_image'].setText(relative_path)
+            except ValueError:
                 self.inputs['background_image'].setText(file_path)
 
     def _save_settings(self):
@@ -240,8 +228,7 @@ class SettingsDialog(QDialog):
 
         # Save to config.json
         try:
-            with open(self.config_file_path, 'w') as f:
-                json.dump(new_config, f, indent=4)
+            self.config_file_path.write_text(json.dumps(new_config, indent=4))
 
             # Show restart message if needed
             if borderless_changed:

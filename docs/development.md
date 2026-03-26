@@ -5,7 +5,7 @@ This guide covers development setup, building from source, and technical details
 ## Requirements
 
 For building from source:
-- Python 3.8 or later
+- Python 3.9 or later
 - Required libraries listed in requirements.txt
 
 ### Installing Dependencies

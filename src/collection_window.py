@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QWidget, QGridLayout, QLineEdit, QComboBox, QPushButton
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QMovie, QPixmap
+from PySide6.QtGui import QMovie
 from ui_colors import UIColors
 from utils import find_pokemon_gif
 

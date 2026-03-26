@@ -1,6 +1,6 @@
 """UI management module for Qt interface"""
 from pathlib import Path
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu, QHBoxLayout
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QMovie
 from ui_colors import UIColors

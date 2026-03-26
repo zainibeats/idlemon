@@ -3,39 +3,34 @@ import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
-
-from config_loader import load_config, check_file_exists, get_base_path, PROJECT_ROOT
+from config_loader import load_config, PROJECT_ROOT
 from data_manager import DataManager
 from audio_manager import AudioManager
 from ui_manager import UIManager
 from game_controller import GameController
 from settings_dialog import SettingsDialog
 from collection_window import CollectionWindow
-from logger import logger
+from logger import LogManager
 
 # Print startup info
 print("Starting IdleMon...")
 print(f"Executable path: {sys.executable}")
 print(f"Working directory: {Path.cwd()}")
 
-# Initialize configuration and managers
-config = load_config()
-data_manager = DataManager(config)
-
 
 class IdleMonWindow(QMainWindow):
     """Main application window"""
 
-    def __init__(self):
+    def __init__(self, config, data_manager, logger):
         super().__init__()
         self.setWindowTitle("IdleMon")
 
         # Store config and settings
         self.config = config
+        self.logger = logger
         self.borderless_mode = config["borderless_mode"]
-        self.shiny_paused = False  # Track if hunt is paused due to shiny
-        self.collection_window = None  # Track collection window instance
+        self.shiny_paused = False
+        self.collection_window = None
 
         # Setup borderless transparent window if enabled
         if self.borderless_mode:
@@ -45,25 +40,21 @@ class IdleMonWindow(QMainWindow):
                 Qt.Tool
             )
             self.setAttribute(Qt.WA_TranslucentBackground)
-            # Variables for drag functionality
             self.drag_position = None
-
-            # Create system tray icon
             self._create_tray_icon()
 
         # Initialize managers
-        self.game = GameController(config, data_manager)
-        self.audio = AudioManager(PROJECT_ROOT, config["mute_audio"])
+        self.game = GameController(config, data_manager, self.logger)
+        self.audio = AudioManager(PROJECT_ROOT, config["mute_audio"], self.logger)
 
         # Setup background path
-        background_image_path = config["background_image"]
-        if not Path(background_image_path).is_absolute():
+        background_image_path = Path(config["background_image"])
+        if not background_image_path.is_absolute():
             background_path = PROJECT_ROOT / background_image_path
         else:
-            background_path = Path(background_image_path)
+            background_path = background_image_path
 
-        # Fallback to default if not found
-        if not check_file_exists(background_path):
+        if not background_path.exists():
             print(f"Warning: Could not find background image at {background_path}")
             background_path = PROJECT_ROOT / "assets" / "images" / "default_background.jpg"
 
@@ -78,12 +69,10 @@ class IdleMonWindow(QMainWindow):
         shiny_count = self.game.initialize_shiny_count()
         self.ui.update_shiny_count(shiny_count)
 
-        # Connect continue button (only in normal mode)
+        # Connect buttons and labels (only in normal mode)
         if not self.borderless_mode:
             self.ui.continue_button.clicked.connect(self.continue_hunt)
-            # Connect settings button
             self.ui.settings_button.clicked.connect(self.open_settings)
-            # Connect shiny label click to open collection window
             self.ui.enable_shiny_label_click(self.open_collection_window)
 
         # Start game
@@ -92,16 +81,10 @@ class IdleMonWindow(QMainWindow):
 
     def _create_tray_icon(self):
         """Create system tray icon for borderless mode"""
-        # Create tray icon (using a simple approach without icon file for now)
         self.tray_icon = QSystemTrayIcon(self)
-
-        # Create tray menu
         tray_menu = QMenu()
-
-        # Add exit action
         exit_action = tray_menu.addAction("Exit IdleMon")
         exit_action.triggered.connect(self.close)
-
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.setToolTip("IdleMon - Pokemon Desktop Pet")
         self.tray_icon.show()
@@ -114,118 +97,87 @@ class IdleMonWindow(QMainWindow):
         self.game.signals.shiny_found.connect(self.on_shiny_found)
 
     def on_encounter_update(self, pokemon_name, rarity, is_shiny):
-        """Handle encounter update"""
         self.ui.update_encounter_display(pokemon_name, rarity, is_shiny)
 
     def on_counter_update(self, count):
-        """Handle encounter counter update"""
         self.ui.update_encounter_count(count)
 
     def on_timer_update(self, seconds):
-        """Handle timer update"""
         self.ui.update_timer(seconds)
 
     def on_shiny_found(self, pokemon_name, rarity):
         """Handle shiny encounter"""
-        # Play sound
         self.audio.play_shiny_sound()
-
-        # Update game state
         self.game.handle_shiny_found(pokemon_name, rarity)
-
-        # Update UI
-        new_count = self.game.total_shiny_found
-        self.ui.update_shiny_count(new_count)
+        self.ui.update_shiny_count(self.game.total_shiny_found)
         self.ui.show_continue_button()
 
-        # Mark shiny paused for borderless mode
         if self.borderless_mode:
             self.shiny_paused = True
 
     def continue_hunt(self):
         """Handle continue button click"""
-        # Play sound
         self.audio.play_continue_sound()
-
-        # Reset game state
         self.game.reset_encounters()
         self.ui.update_encounter_count(0)
-
-        # Hide button
         self.ui.hide_continue_button()
 
-        # Clear shiny paused state
         if self.borderless_mode:
             self.shiny_paused = False
 
-        # Restart game
         self.game.reset_timer()
         self.game.start_encounter_loop()
 
     def open_settings(self):
         """Open settings dialog"""
         config_file_path = PROJECT_ROOT / "config.json"
-        dialog = SettingsDialog(config, str(config_file_path), self)
+        dialog = SettingsDialog(self.config, str(config_file_path), PROJECT_ROOT, self)
         dialog.settings_changed.connect(self.on_settings_changed)
         dialog.exec()
 
     def open_collection_window(self):
         """Open or bring to front the shiny collection window"""
-        # If window already exists and is visible, bring it to front
         if self.collection_window and self.collection_window.isVisible():
             self.collection_window.raise_()
             self.collection_window.activateWindow()
         else:
-            # Create new collection window
-            self.collection_window = CollectionWindow(logger, PROJECT_ROOT, self)
+            self.collection_window = CollectionWindow(self.logger, PROJECT_ROOT, self)
             self.collection_window.show()
 
     def on_settings_changed(self, new_config):
-        """Handle settings changes"""
-        # Apply immediate changes (things that don't require restart)
+        """Handle settings changes that don't require restart"""
         if 'mute_audio' in new_config and new_config['mute_audio'] != self.config.get('mute_audio'):
             self.audio.set_mute(new_config['mute_audio'])
             self.config['mute_audio'] = new_config['mute_audio']
 
-        if 'encounter_delay' in new_config and new_config['encounter_delay'] != self.config.get('encounter_delay'):
-            self.game.encounter_delay = new_config['encounter_delay']
-            self.config['encounter_delay'] = new_config['encounter_delay']
-
-        if 'shiny_rate' in new_config and new_config['shiny_rate'] != self.config.get('shiny_rate'):
-            self.game.shiny_rate = new_config['shiny_rate']
-            self.config['shiny_rate'] = new_config['shiny_rate']
-
     def mousePressEvent(self, event):
-        """Handle mouse press for dragging in borderless mode"""
         if self.borderless_mode and event.button() == Qt.LeftButton:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):
-        """Handle mouse move for dragging in borderless mode"""
         if self.borderless_mode and event.buttons() == Qt.LeftButton and self.drag_position:
             self.move(event.globalPosition().toPoint() - self.drag_position)
             event.accept()
 
     def closeEvent(self, event):
-        """Handle window close"""
         self.game.stop_timer()
-
-        # Clean up tray icon if in borderless mode
         if self.borderless_mode and hasattr(self, 'tray_icon'):
             self.tray_icon.hide()
-
         event.accept()
-        # Force application quit
         QApplication.quit()
 
 
 def main():
     """Main entry point"""
+    config = load_config()
+    logger = LogManager(PROJECT_ROOT / "logs")
+    data_manager = DataManager(config, logger)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 
-    window = IdleMonWindow()
+    window = IdleMonWindow(config, data_manager, logger)
     window.show()
 
     sys.exit(app.exec())

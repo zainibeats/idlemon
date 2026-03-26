@@ -2,22 +2,23 @@
 from pathlib import Path
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QSoundEffect
-from logger import logger
 
 
 class AudioManager:
     """Manages game sound effects"""
 
-    def __init__(self, project_root, mute_audio=False):
+    def __init__(self, project_root, mute_audio, logger):
         """
         Initialize audio manager
 
         Args:
             project_root: Base path for assets
             mute_audio: Whether audio is muted
+            logger: LogManager instance
         """
         self.project_root = Path(project_root)
         self.mute_audio = mute_audio
+        self.logger = logger
         self.shiny_sound = None
         self.continue_sound = None
 
@@ -33,7 +34,7 @@ class AudioManager:
             self.shiny_sound.setSource(QUrl.fromLocalFile(str(shiny_sound_path)))
             self.shiny_sound.setVolume(1.0)
         else:
-            logger.log_error(f"Shiny sound file not found: {shiny_sound_path}")
+            self.logger.log_error(f"Shiny sound file not found: {shiny_sound_path}")
 
         # Load continue sound
         continue_sound_path = self.project_root / "assets" / "sounds" / "continue_sound1.wav"
@@ -42,7 +43,7 @@ class AudioManager:
             self.continue_sound.setSource(QUrl.fromLocalFile(str(continue_sound_path)))
             self.continue_sound.setVolume(1.0)
         else:
-            logger.log_error(f"Continue sound file not found: {continue_sound_path}")
+            self.logger.log_error(f"Continue sound file not found: {continue_sound_path}")
 
     def play_shiny_sound(self):
         """Play shiny encounter sound"""

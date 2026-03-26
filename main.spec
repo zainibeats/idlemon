@@ -3,8 +3,6 @@ import os
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all
 
-block_cipher = None
-
 # Get the project root directory
 PROJECT_ROOT = Path(os.getcwd())
 
@@ -69,21 +67,15 @@ a = Analysis(
         'PySide6.QtGui',
         'PySide6.QtWidgets',
         'PySide6.QtMultimedia',
-        # Additional modules that might be needed
-        'PySide6.QtNetwork',  # Sometimes required for Qt internals
-        'PySide6.QtSvg',      # For SVG support if used
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=['tkinter', 'pygame'],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data)
 
 exe = EXE(
     pyz,
