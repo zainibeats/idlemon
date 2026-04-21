@@ -1,5 +1,4 @@
 """Configuration management module"""
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -15,15 +14,6 @@ def get_base_path():
 
 PROJECT_ROOT = get_base_path()
 
-# SHA-256 hashes for data file verification
-POKEMON_DATA_HASHES = {
-    "gen1": "bb1fd5dbb801d1e8f453d39eedc85f20fb96c804613041b236581e4037645b5f",
-    "gen2": "6bac78b82268154f307cbdff766e2d71c67f48881bd296f5f1d1ac6af556b5c3",
-    "gen3": "edc5d92ae40dd6d8cc7205537d58b570fede40970ba2cfd8bb9e7ab3241d21cb",
-    "gen4": "56e5512eff1684bf4fac1d512d5ab8fd9fe49c1058260f85e3a43a57fbd8b8eb",
-    "gen5": "35f7fbd7e12604d46517389f8d1133f06e67d93b3dbe4fc6b894f26b658c0f73"
-}
-
 DEFAULT_CONFIG = {
     "encounter_delay": 2.5,
     "rarity_weights": {
@@ -37,7 +27,6 @@ DEFAULT_CONFIG = {
     "mute_audio": False,
     "borderless_mode": False,
     "shiny_count_file": "logs/shiny_count.bin",
-    "shinies_encounter_file": "logs/shinies_encountered.txt",
     "background_image": "assets/images/default_background.jpg",
     "pokemon_data_files": {
         "gen1": "assets/data/gen1_pokemon_names.txt",
@@ -49,13 +38,11 @@ DEFAULT_CONFIG = {
 }
 
 
-def validate_pokemon_data_file(gen, file_path):
-    """Verify Pokemon data file integrity using SHA-256 hash"""
-    file_path = Path(file_path)
-    if not file_path.exists():
-        return False
-    file_hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
-    return file_hash == POKEMON_DATA_HASHES.get(gen, "")
+def _normalize_path_value(value):
+    """Normalize config path strings so Windows-style paths still parse on Linux."""
+    if isinstance(value, str):
+        return value.replace("\\", "/")
+    return value
 
 
 def _create_directories():
@@ -70,7 +57,7 @@ def _create_directories():
 
 
 def load_config():
-    """Load configuration from file, merge with defaults, validate data files"""
+    """Load configuration from file, merge with defaults, and validate required data files."""
     _create_directories()
 
     # Load user config if exists
@@ -85,11 +72,17 @@ def load_config():
     # Merge user config with defaults
     config = {**DEFAULT_CONFIG, **user_config}
 
+    config["background_image"] = _normalize_path_value(config["background_image"])
+    config["shiny_count_file"] = _normalize_path_value(config["shiny_count_file"])
+    config["pokemon_data_files"] = {
+        gen: _normalize_path_value(path)
+        for gen, path in config["pokemon_data_files"].items()
+    }
+
     # Convert relative paths to absolute
-    for key in ("shiny_count_file", "shinies_encounter_file"):
-        path = Path(config[key])
-        if not path.is_absolute():
-            config[key] = str(PROJECT_ROOT / path)
+    path = Path(config["shiny_count_file"])
+    if not path.is_absolute():
+        config["shiny_count_file"] = str(PROJECT_ROOT / path)
 
     # Convert Pokemon data paths to absolute
     first_path = Path(next(iter(config["pokemon_data_files"].values())))
@@ -99,10 +92,14 @@ def load_config():
             for gen, path in config["pokemon_data_files"].items()
         }
 
-    # Verify all Pokemon data files
-    for gen, file_path in config["pokemon_data_files"].items():
-        if not validate_pokemon_data_file(gen, file_path):
-            print(f"Error: {file_path} validation failed. Please ensure the file exists and has not been modified.")
-            sys.exit(1)
+    missing_files = [
+        file_path for file_path in config["pokemon_data_files"].values()
+        if not Path(file_path).exists()
+    ]
+    if missing_files:
+        print("Error: required Pokemon data files are missing:")
+        for file_path in missing_files:
+            print(f" - {file_path}")
+        sys.exit(1)
 
     return config

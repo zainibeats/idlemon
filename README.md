@@ -1,179 +1,78 @@
-# IdleMon - Automated Shiny Hunting Simulator
+# IdleMon
 
-Python Idle Game project that simulates encountering Pokémon with a chance of finding shiny Pokémon. Featuring animated GIFs for Pokémon encounters, shiny tracking, encounter statistics, and customization options.
-
-> *Looking for the Linux version? Check out the [Linux branch](https://github.com/zainibeats/idlemon/tree/linux)*
+IdleMon is a small PySide6 desktop app that simulates Pokemon encounters and shiny hunting. It runs from source on Linux and is packaged as a portable one-folder Windows build.
 
 ![screenshot of shiny Giratina encounter](assets/images/giratina-screenshot.png)
 
+## Release Status
+
+- Current development version: `0.3.0`
+- Windows release format: portable one-folder zip
+- Linux release format: source-run only for now
+
 ## Features
 
-- **Shiny hunting simulator** with 1/2000 encounter rate and animated GIF sprites
-- **Shiny Collection window** to view, search, and sort all your caught shinies
-- **Desktop Pet Mode** - optional borderless transparent window with draggable Pokémon
-- **Statistics tracking** including encounter counter, timer, and total shinies found
-- **Sound effects** for shiny encounters and interactions
-- **Easy customization** through a built-in settings dialog
-
----
+- Animated normal and shiny encounter GIFs across generations 1-5
+- Shiny counter, encounter counter, and elapsed timer
+- Searchable shiny collection with sorting and duplicate counts
+- Optional borderless desktop pet mode
+- Local portable save data in `logs/`
+- Configurable audio and background image
 
 ## Quick Start
 
-### Windows Users
-1. Download the latest release from the releases page
-2. Extract the zip file
-3. Run `IdleMon.exe`
+### Windows
 
-### Developers
-See the **[Development Guide](docs/development.md)** for:
-- Installing dependencies
-- Running from source
-- Building executables
-- Project structure
+1. Download the latest Windows release zip.
+2. Extract it.
+3. Run `IdleMon.exe` from the extracted `IdleMon/` folder.
 
----
+### Linux
 
-## Features Guide
+Follow [docs/linux-setup.md](docs/linux-setup.md) to install dependencies and run from source.
 
-### Shiny Collection
-Track and view all your shiny Pokémon in a dedicated collection window:
+## Development
 
-**Opening the Collection:**
-- Click on the "Shiny Pokémon Found: X" counter in normal mode
-- Right-click on the Pokémon (in either mode) and select "View Collection"
+Use [docs/development.md](docs/development.md) for local development and project structure.
 
-**Collection Features:**
-- **Grid Display:** View all your shinies in a 4-column grid
-- **Hover Animations:** GIFs animate when you hover over them
-- **Search:** Filter Pokémon by name using the search bar
-- **Sort Options:**
-  - By Name (alphabetical)
-  - By Rarity (Very Rare → Very Common)
-  - By Count (most duplicates first)
-- **Statistics:** See total shinies caught and unique species count
-- **Duplicate Tracking:** Badges show "x2", "x3", etc. for multiple catches of the same Pokémon
-
-### Desktop Pet Mode
-Enable borderless mode for a transparent desktop companion:
-
-**How to Enable:**
-1. Open Settings (⚙ button or right-click menu)
-2. Enable "Borderless Desktop Pet Mode"
-3. Restart the application
-
-**Features:**
-- Transparent, frameless window showing only the Pokémon
-- Drag the Pokémon anywhere on your screen
-- Right-click for context menu:
-  - View Collection
-  - Settings
-  - Continue Hunt (after finding a shiny)
-  - Exit IdleMon
-- System tray icon for easy exit
-
-### Encounter System
-- Each encounter has a chance of being shiny (1/2000 by default)
-- When a shiny is found:
-  1. The encounter animation changes
-  2. A sound plays (if not muted)
-  3. The encounter count remains displayed
-  4. A continue button appears
-- After pressing continue:
-  1. The encounter counter resets to 0
-  2. A new hunting session begins
-
-### Sound System
-- Shiny encounters trigger a special sound effect
-- Continue button plays a confirmation sound
-- Optional muting through settings menu or config.json
-
-### Statistics Tracking
-- Real-time encounter counter (resets after continuing from a shiny)
-- Elapsed time tracker
-- Total shiny Pokémon found (clickable to view collection)
-- Automatic data saving for shiny counts and collection data
-- Persistent collection history with rarity and duplicate tracking
-
-### Resetting Progress
-To reset your hunting progress, you can either:
-
-Delete individual files:
-1. Navigate to the `logs` directory in your IdleMon folder
-2. Delete these files:
-   - `shiny_count.bin` (resets total shinies to 0)
-   - `shinies_encountered.txt` (clears shiny encounter history)
-
-OR
-
-Simply delete the entire `logs` directory.
-New files will be automatically created when you next run the program.
-
----
+Use [docs/windows-portable-build.md](docs/windows-portable-build.md) to build the Windows portable release.
 
 ## Configuration
 
-### Settings Dialog (Recommended)
-The easiest way to configure IdleMon is through the built-in settings dialog:
-- **Normal Mode:** Click the ⚙ Settings button in the stats panel
-- **Desktop Pet Mode:** Right-click on the Pokémon and select "⚙ Settings"
+IdleMon stores settings in `config.json` beside the executable or project root.
 
-Available settings:
-- **Borderless Desktop Pet Mode:** Enable transparent window mode (requires restart)
-- **Mute Audio:** Disable all sound effects
-- **Background Image:** Choose a custom background image using the file browser
+Supported user-facing settings:
 
-Settings are automatically saved to `config.json`.
+- `borderless_mode`
+- `mute_audio`
+- `background_image`
 
-### Manual Configuration (Advanced)
-For advanced users, you can also directly edit the `config.json` file placed in the same folder as the executable:
+Example:
 
-### Example `config.json`
 ```json
-# Using absolute path:
 {
-    "background_image": "C:/Users/YourName/Pictures/custom_background.png",
-    "mute_audio": false
-}
-
-# OR using relative path (relative to IdleMon.exe):
-{
-    "background_image": "assets/images/my_background.jpg",
-    "mute_audio": false
+  "borderless_mode": false,
+  "mute_audio": false,
+  "background_image": "assets/images/default_background.jpg"
 }
 ```
 
-### Key Settings
-- **`background_image`:** Path to background image. Can be:
-  - Absolute path (e.g., "C:/Users/YourName/Pictures/custom_background.png")
-  - Relative path from IdleMon.exe (e.g., "assets/images/my_background.jpg")
-  - Defaults to included background if not found
-- **`mute_audio`:** Set to `true` to disable all sound effects (default: `false`)
+## Save Data
 
----
+IdleMon stores runtime data in `logs/`:
+
+- `shiny_count.bin`: total shiny count
+- `shinies_encountered.txt`: shiny collection history
+- `error.log`: runtime errors
+
+Delete `logs/` to reset progress.
 
 ## Troubleshooting
-- **Missing GIFs:** Ensure GIF files exist in the correct generation's normal/shiny directories
-- **Animation Issues:** Verify GIF files are properly formatted
-- **Sound Problems:**
-  - Check that sound files exist in the assets/sounds directory
-  - Verify audio is not muted in Settings
-- **Background Image:**
-  - Use the Settings dialog to browse for valid image files
-  - Ensure the specified path exists and is accessible
-- **Shiny Collection Not Loading:**
-  - Check that `logs/shinies_encountered.txt` exists and is not corrupted
-  - File format should be: `pokemon_name | rarity | count`
-- **Application Not starting:**
-  - First, make sure you are running the EXE from the [project root](docs/development.md#portable-directory-structure)
-  - Close any instances of Idlemon in Task Manager
-  - If all else fails, delete the `logs` directory in your IdleMon folder. This _WILL_ reset all data!!
-- **Desktop Pet Mode Issues:**
-  - Requires restart to enable/disable
-  - May not work on all systems (requires system tray support)
-  - Use right-click context menu to access features
-  - Ensure the `config.json` file is correctly formatted (or use Settings dialog instead)
 
----
+- If the app does not start, confirm `assets/` exists beside `IdleMon.exe` in the Windows build.
+- If GIFs or sounds are missing, rebuild the portable folder and verify the `assets/` directory was included.
+- If Linux shows Qt plugin errors, follow the dependency notes in [docs/linux-setup.md](docs/linux-setup.md).
 
 ## License
+
 This project is licensed under the MIT License.

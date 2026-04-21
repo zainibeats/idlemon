@@ -1,0 +1,4 @@
+interface:
+  display_name: "IdleMon Release"
+  short_description: "Release, packaging, and runbook guidance for IdleMon."
+  default_prompt: "Use this skill to prepare IdleMon releases, build the Windows portable folder, update release docs, and document Linux source-run instructions."

@@ -25,7 +25,7 @@ class DataManager:
                 self.logger.log_error(f"Error loading shiny count: {e}")
                 print(f"Warning: {self.shiny_count_file} is corrupted. Resetting to 0.")
         else:
-            logger.log_error(f"Shiny count file missing: {self.shiny_count_file}")
+            self.logger.log_error(f"Shiny count file missing: {self.shiny_count_file}")
             print(f"Warning: {self.shiny_count_file} is missing. Creating new file.")
 
         self.save_shiny_count(0)

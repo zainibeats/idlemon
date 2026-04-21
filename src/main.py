@@ -11,6 +11,7 @@ from game_controller import GameController
 from settings_dialog import SettingsDialog
 from collection_window import CollectionWindow
 from logger import LogManager
+from version import APP_VERSION
 
 # Print startup info
 print("Starting IdleMon...")
@@ -23,7 +24,7 @@ class IdleMonWindow(QMainWindow):
 
     def __init__(self, config, data_manager, logger):
         super().__init__()
-        self.setWindowTitle("IdleMon")
+        self.setWindowTitle(f"IdleMon {APP_VERSION}")
 
         # Store config and settings
         self.config = config

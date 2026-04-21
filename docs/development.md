@@ -1,114 +1,56 @@
 # Development Guide
 
-This guide covers development setup, building from source, and technical details for IdleMon.
+This guide covers local development for IdleMon `0.3.0`.
 
 ## Requirements
 
-For building from source:
 - Python 3.9 or later
-- Required libraries listed in requirements.txt
+- A virtual environment is recommended
 
-### Installing Dependencies
+Install Python dependencies:
 
 ```bash
-# Using pip (Windows/Linux)
-pip install -r requirements.txt
-
-# Or if you have multiple Python versions
 python -m pip install -r requirements.txt
 ```
 
----
+## Run From Source
 
-## Running from Source
+Run from the repository root:
 
-### Development Mode
 ```bash
-# Run directly from source
 python src/main.py
-
-# Or from project root
-python -m src.main
 ```
 
-### Windows Portable Version
-1. Download the latest release
-2. Extract the zip file anywhere you like
-3. Run `IdleMon.exe` from the extracted folder
+## Project Layout
 
-The application is fully portable:
-- Can be run from any location
-- All data is stored in the application folder
-- No installation required
-- No system modifications
+- `src/main.py`: application entrypoint and top-level wiring
+- `src/config_loader.py`: config loading, path resolution, and startup directory creation
+- `src/game_controller.py`: encounter loop, timer loop, and shiny logic
+- `src/ui_manager.py`: main window UI and borderless mode behavior
+- `src/settings_dialog.py`: settings dialog and config persistence
+- `src/collection_window.py`: shiny collection UI
+- `src/data_manager.py`: shiny count persistence and Pokemon data loading
+- `src/logger.py`: error logging and shiny encounter history
+- `main.spec`: Windows portable one-folder PyInstaller build
+- `assets/`: bundled images, sounds, gifs, and Pokemon data
 
----
+## Configuration Notes
 
-## Building from Source
+- `config.json` is merged over in-code defaults.
+- Relative paths are resolved from the project root in source mode and from the executable folder in packaged mode.
+- Settings saves preserve advanced config keys instead of overwriting the full file.
 
-### Windows
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-3. Build the executable:
-   ```bash
-   pyinstaller main.spec
-   ```
-4. The portable version will be created in `dist/IdleMon`
+## Windows Release Build
 
-### Linux
-See the [Linux branch](https://github.com/zainibeats/idlemon/tree/linux) for Linux-specific build instructions.
+Use [windows-portable-build.md](windows-portable-build.md) for the portable one-folder build and zip process.
 
----
+Use [release-process.md](release-process.md) for the full release checklist.
 
-## Project Architecture
+## Linux
 
-For detailed technical information about the codebase architecture, see [CLAUDE.md](../CLAUDE.md) which covers:
-- Modular component system
-- Signal-based communication
-- Threading model
-- Configuration system
-- And more...
+Use [linux-setup.md](linux-setup.md) for source-run instructions and Linux troubleshooting.
 
----
+## Versioning
 
-## Portable Directory Structure
-```
-IdleMon/
-├── IdleMon.exe
-├── assets/
-│   ├── gifs/
-│   │   ├── gen1/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen2/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen3/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   ├── gen4/
-│   │   │   ├── normal/
-│   │   │   └── shiny/
-│   │   └── gen5/
-│   │       ├── normal/
-│   │       └── shiny/
-│   ├── sounds/
-│   │   ├── shiny_sound1.wav
-│   │   └── continue_sound1.wav
-│   ├── data/
-│   │   ├── gen1_pokemon_names.txt
-│   │   ├── gen2_pokemon_names.txt
-│   │   ├── gen3_pokemon_names.txt
-│   │   ├── gen4_pokemon_names.txt
-│   │   └── gen5_pokemon_names.txt
-│   └── images/
-│       └── background.png
-├── config.json (can be edited via Settings dialog)
-└── logs/      (created automatically)
-    ├── shiny_count.bin         (total shiny count)
-    ├── shinies_encountered.txt (shiny collection data)
-    └── error.log
-```
+- Current version: `0.3.0`
+- Release history: [../CHANGELOG.md](../CHANGELOG.md)

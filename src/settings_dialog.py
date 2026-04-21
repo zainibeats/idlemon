@@ -215,15 +215,16 @@ class SettingsDialog(QDialog):
     def _save_settings(self):
         """Save settings to config.json"""
         # Collect new settings (only user-configurable ones)
-        new_config = {
+        updated_settings = {
             'borderless_mode': self.inputs['borderless_mode'].isChecked(),
             'mute_audio': self.inputs['mute_audio'].isChecked(),
             'background_image': self.inputs['background_image'].text()
         }
+        new_config = {**self.current_config, **updated_settings}
 
         # Check if borderless mode changed
         borderless_changed = (
-            new_config['borderless_mode'] != self.current_config.get('borderless_mode', False)
+            updated_settings['borderless_mode'] != self.current_config.get('borderless_mode', False)
         )
 
         # Save to config.json
