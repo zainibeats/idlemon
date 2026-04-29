@@ -40,17 +40,6 @@ python src/main.py
 - Relative paths are resolved from the project root in source mode and from the executable folder in packaged mode.
 - Settings saves preserve advanced config keys instead of overwriting the full file.
 
-## Windows Release Build
-
-Use [windows-portable-build.md](windows-portable-build.md) for the portable one-folder build and zip process.
-
-Use [release-process.md](release-process.md) for the full release checklist.
-
 ## Linux
 
 Use [linux-setup.md](linux-setup.md) for source-run instructions and Linux troubleshooting.
-
-## Versioning
-
-- Current version: `0.3.0`
-- Release history: [../CHANGELOG.md](../CHANGELOG.md)
