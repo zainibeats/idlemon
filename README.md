@@ -35,8 +35,6 @@ Follow [docs/linux-setup.md](docs/linux-setup.md) to install dependencies and ru
 
 Use [docs/development.md](docs/development.md) for local development and project structure.
 
-Use [docs/windows-portable-build.md](docs/windows-portable-build.md) to build the Windows portable release.
-
 ## Configuration
 
 IdleMon stores settings in `config.json` beside the executable or project root.
