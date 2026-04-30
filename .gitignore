@@ -180,3 +180,6 @@ logs/shinies_encountered.txt
 *.ps1
 version.txt
 RELEASE.md
+
+# Codex
+.codex/
