@@ -2,7 +2,7 @@
 
 IdleMon is a small PySide6 desktop app that simulates Pokemon encounters and shiny hunting. It runs from source on Linux and is packaged as a portable one-folder Windows build.
 
-![screenshot of shiny Giratina encounter](assets/images/giratina-screenshot.png)
+![screenshot of shiny Giratina encounter](https://assets.czaini.net/images/giratina-screenshot.jpg)
 
 ## Release Status
 
