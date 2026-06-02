@@ -2,32 +2,21 @@
 
 Review date: 2026-06-02
 
-Scope: static review of the Python/PySide6 desktop app, docs, config, packaging spec, and bundled assets. No source fixes were made.
+Scope: follow-up static review of the Python/PySide6 desktop app, docs, config, packaging spec, and bundled assets after the first cleanup pass.
 
 ## Quick Verdict
 
-IdleMon is close to usable as a small desktop pet, but I would not call it production-ready yet. The main blockers are around runtime lifecycle, save/config resilience, and packaging conventions. The app has a simple structure and all Pokemon data entries have matching normal and shiny GIFs, which is a strong base for a cleanup pass.
+IdleMon is closer to production-ready after the first fixes. The timer lifecycle now uses Qt-native timers, save data is stored as atomic JSON, generated runtime files are ignored, and focused tests cover config loading, save round trips, data parsing, and asset coverage.
+
+The remaining production risks are mostly around config validation, user data location, path ownership, and production diagnostics.
 
 ## Must Fix Before Production
 
-### 1. Replace ad hoc Python threads with Qt-native timers or worker lifecycle management
+### 1. Stop writing user save data and mutable config into the app install directory by default
 
-References: `src/game_controller.py:79`, `src/game_controller.py:96`, `src/game_controller.py:109`, `src/game_controller.py:113`, `src/main.py:119`, `src/main.py:164`
+References: `src/config_loader.py:7`, `src/config_loader.py:15`, `src/config_loader.py:46`, `src/main.py:135`, `src/main.py:176`, `main.spec:13`
 
-`GameController` starts daemon `threading.Thread` loops for both the timer and encounters. This is more complex than needed for a Qt app and creates lifecycle risks:
-
-- `continue_hunt()` can start a new encounter thread without joining or explicitly stopping the previous one.
-- `closeEvent()` only stops the timer flag, not the encounter loop.
-- Shared fields such as `total_encounters`, `shiny_found_flag`, `timer_running`, and `start_time` are read/written across threads without synchronization.
-- The work is timer-based UI/game state, which is a natural fit for `QTimer` on the Qt event loop.
-
-Recommended direction: use one or two `QTimer` instances owned by the main/window/controller object. This should remove most threading complexity rather than adding locks.
-
-### 2. Stop writing user save data and mutable config into the app install directory by default
-
-References: `src/config_loader.py:7`, `src/config_loader.py:15`, `src/config_loader.py:48`, `src/main.py:132`, `src/main.py:174`, `main.spec:13`
-
-The app currently resolves `PROJECT_ROOT` to the source root or executable folder, then stores `config.json` and `logs/` there. That works for a portable one-folder build, but it is not a general production convention. It also means packaged users may write progress into the extracted program folder.
+The app still resolves `PROJECT_ROOT` to the source root or executable folder, then stores `config.json`, `data/save_data.json`, and `logs/` there. That works for a portable one-folder build, but it is not a general production convention. It also means packaged users may write progress into the extracted program folder.
 
 Recommended direction depends on product vision:
 
@@ -36,21 +25,11 @@ Recommended direction depends on product vision:
 
 Question: should IdleMon remain intentionally portable-first, or should it use OS user data directories for production?
 
-### 3. Make save writes atomic and use plain structured files
+### 2. Validate config values before runtime use
 
-References: `src/data_manager.py:18`, `src/data_manager.py:34`, `src/logger.py:40`, `src/logger.py:48`
+References: `src/config_loader.py:60`, `src/game_controller.py:35`, `src/game_controller.py:47`, `src/game_controller.py:80`, `src/game_controller.py:139`
 
-`shiny_count.bin` is a base64-encoded integer, and the collection history is a custom pipe-delimited text file. Both files are rewritten directly. A crash or power loss during write can corrupt progress, and base64 adds obscurity without adding useful safety.
-
-Recommended direction: use one JSON save file with a small schema, write to a temporary file, then atomically replace the old file. For a desktop pet, JSON is simpler, inspectable, and conventional.
-
-Question: do you want save data to be human-editable, or intentionally hidden from casual editing?
-
-### 4. Validate config values before runtime use
-
-References: `src/config_loader.py:59`, `src/config_loader.py:72`, `src/game_controller.py:35`, `src/game_controller.py:62`, `src/game_controller.py:121`
-
-`load_config()` merges user JSON into defaults, but does not validate types or ranges. Invalid values can break runtime behavior:
+`load_config()` merges user JSON into defaults, but does not validate the core runtime settings. Invalid values can still break runtime behavior:
 
 - `shiny_rate <= 0` can crash `random.randint`.
 - `encounter_delay` can be negative or non-numeric.
@@ -59,25 +38,11 @@ References: `src/config_loader.py:59`, `src/config_loader.py:72`, `src/game_cont
 
 Recommended direction: keep validation small and explicit. Clamp or reject the few user-facing fields, and treat internal asset paths as constants unless there is a clear reason users need to configure them.
 
-### 5. Add at least a smoke-testable startup path
-
-References: no test files found; syntax check only passed with `python -m compileall -q src`
-
-There is no automated test coverage. Full GUI testing is not required before production for a project this size, but the risky parts can be tested without showing a window:
-
-- config loading and validation
-- Pokemon data parsing
-- GIF coverage for all data entries
-- save load/write round trips
-- collection aggregation
-
-Recommended direction: add `pytest` and a small test suite around non-UI logic. Keep GUI tests optional.
-
 ## Simplification And Refactor Opportunities
 
 ### 1. Centralize path ownership
 
-References: `src/config_loader.py:7`, `src/main.py:51`, `src/data_manager.py:9`, `src/settings_dialog.py:17`, `src/utils.py:5`
+References: `src/config_loader.py:7`, `src/main.py:51`, `src/data_manager.py:12`, `src/settings_dialog.py:17`, `src/utils.py:5`
 
 Path resolution is spread across config loading, main window setup, data manager, settings dialog, and utility functions. A small `paths.py` or `AppPaths` object would simplify this:
 
@@ -108,7 +73,7 @@ Recommended direction: do not introduce a large design system. Just extract the 
 
 ### 4. Replace console prints with configured logging or user-visible errors
 
-References: `src/main.py:16`, `src/game_controller.py:72`, `src/game_controller.py:145`, `src/data_manager.py:26`, `src/config_loader.py:69`
+References: `src/config_loader.py:71`, `src/data_manager.py:59`, `src/game_controller.py:86`, `src/game_controller.py:116`, `src/game_controller.py:164`, `src/game_controller.py:166`
 
 The app runs packaged with `console=False`, so many `print()` diagnostics are invisible to users. Production behavior should be either:
 
@@ -125,47 +90,38 @@ References: `src/logger.py:13`, `src/logger.py:18`
 
 Recommended direction: either use a per-instance logger name or check whether the file handler already exists before adding one.
 
-### 6. Keep production artifacts out of the repo
-
-References: `.gitignore:122`, current workspace contains `logs/error.log`, `logs/shinies_encountered.txt`, `logs/shiny_count.bin`, and `src/__pycache__/`
-
-The ignore file ignores the save filenames only at repo root, not under `logs/`. The workspace currently contains generated runtime files. These should not be versioned or reviewed as source.
-
-Recommended direction: ignore `logs/` or at least `logs/*.log`, `logs/shinies_encountered.txt`, and `logs/shiny_count.bin`; remove generated cache/log files from version control if tracked.
-
-### 7. Consider whether `requirements.txt` should separate runtime and build dependencies
+### 6. Consider whether `requirements.txt` should separate runtime and development dependencies
 
 Reference: `requirements.txt`
 
-`pyinstaller` is build-only but installed for source users. For simplicity this is acceptable, but production polish usually separates runtime and build tooling:
+`pyinstaller` and `pytest` are build/test dependencies but are installed for source users. For simplicity this is acceptable, but production polish usually separates runtime and build tooling:
 
 - `requirements.txt` for runtime
 - `requirements-dev.txt` for build/test tools
 
-This is optional, but it aligns with "known-good conventions."
+This is optional, but it aligns with common Python packaging conventions.
 
 ## Validation Notes
 
-- `python -m compileall -q src` passed.
+- `python -m compileall -q src` passed during the original review.
 - All 649 Pokemon data entries have matching normal and shiny GIF files.
 - Default configured background exists at `assets/images/default_background.jpg`.
 - Packaging spec includes `assets`, `config.json`, `README.md`, and `LICENSE`.
-- No test, lint, type-check, or CI configuration was found.
+- Focused pytest tests now cover config loading, save persistence, Pokemon data parsing, and GIF asset coverage.
 
 ## Open Questions
 
 1. Should production builds be portable-first, with save data beside the executable, or OS-native, with save data in the user's app data directory?
-2. Should save data be easy for users to inspect/edit, or mildly hidden from casual editing?
-3. Are shiny rate, encounter delay, rarity weights, and enabled generations part of the intended user-facing configuration?
-4. Is borderless mode the primary production experience, or is the normal window equally important?
-5. Do you want Linux to remain source-only, or should production readiness include Linux packaging later?
+2. Are shiny rate, encounter delay, rarity weights, and enabled generations part of the intended user-facing configuration?
+3. Is borderless mode the primary production experience, or is the normal window equally important?
+4. Do you want Linux to remain source-only, or should production readiness include Linux packaging later?
 
 ## Suggested Iteration Order
 
 1. Decide portable vs OS-native data location.
-2. Replace thread loops with `QTimer`.
-3. Consolidate paths and config validation.
-4. Move saves to atomic JSON persistence.
-5. Add focused tests for config, data parsing, save round trips, and asset coverage.
-6. Clean generated files and tighten `.gitignore`.
-7. Deduplicate the most repeated UI styles.
+2. Consolidate paths and config validation.
+3. Separate persisted user settings from internal defaults.
+4. Replace console-only diagnostics with logging or user-visible errors.
+5. Make logger setup idempotent.
+6. Deduplicate the most repeated UI styles.
+7. Split runtime and development requirements if packaging polish is in scope.
