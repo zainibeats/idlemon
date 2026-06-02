@@ -8,22 +8,24 @@ Scope: follow-up static review of the Python/PySide6 desktop app, docs, config, 
 
 IdleMon is closer to production-ready after the first fixes. The timer lifecycle now uses Qt-native timers, save data is stored as atomic JSON, generated runtime files are ignored, and focused tests cover config loading, save round trips, data parsing, and asset coverage.
 
-The remaining production risks are mostly around config validation, user data location, path ownership, and production diagnostics.
+The remaining production risks are mostly around config validation, path ownership, and production diagnostics.
 
 ## Must Fix Before Production
 
 ### 1. Stop writing user save data and mutable config into the app install directory by default
 
-References: `src/config_loader.py:7`, `src/config_loader.py:15`, `src/config_loader.py:46`, `src/main.py:135`, `src/main.py:176`, `main.spec:13`
+Status: addressed for the current portable-first Windows product direction. IdleMon now intentionally keeps writable user data in a portable `config/` directory beside the source root or executable folder. That means production Windows builds remain portable by design, while mutable files are no longer scattered across root `config.json`, `data/`, and `logs/`.
 
-The app still resolves `PROJECT_ROOT` to the source root or executable folder, then stores `config.json`, `data/save_data.json`, and `logs/` there. That works for a portable one-folder build, but it is not a general production convention. It also means packaged users may write progress into the extracted program folder.
+References: `src/config_loader.py`, `src/main.py`, `main.spec`
+
+The app resolves `PROJECT_ROOT` to the source root or executable folder, then stores writable user data under `config/`. That is now an explicit portable-build convention rather than an accidental mix of root `config.json`, `data/save_data.json`, and `logs/`.
 
 Recommended direction depends on product vision:
 
-- If the Windows build is intentionally portable, document that as a product constraint and keep user data beside the executable.
+- If the Windows build is intentionally portable, document that as a product constraint and keep user data beside the executable. This is the current product direction.
 - If production should behave like a normal desktop app, store mutable data in the user data/config directory, using a standard helper such as `platformdirs`.
 
-Question: should IdleMon remain intentionally portable-first, or should it use OS user data directories for production?
+Decision: IdleMon remains intentionally portable-first for now. Revisit OS user data directories only if the release format changes away from a portable one-folder Windows build.
 
 ### 2. Validate config values before runtime use
 
@@ -57,7 +59,7 @@ This would remove repeated `PROJECT_ROOT` passing and reduce packaged/source pat
 
 References: `src/config_loader.py:17`, `src/settings_dialog.py:215`, `src/settings_dialog.py:230`
 
-`config.json` only exposes three user-facing settings, but the in-code default config includes game constants and asset paths. The settings dialog saves the fully merged config back to disk, including internal defaults. That makes future default changes harder because old user configs can freeze old internal values.
+`config/config.json` only exposes three user-facing settings, but the in-code default config still includes game constants and asset paths. The settings dialog now saves only user-facing settings, which reduces the risk of old user configs freezing internal defaults.
 
 Recommended direction: keep user settings separate from internal constants. Persist only actual user preferences unless advanced config is intentionally part of the product.
 
@@ -106,22 +108,22 @@ This is optional, but it aligns with common Python packaging conventions.
 - `python -m compileall -q src` passed during the original review.
 - All 649 Pokemon data entries have matching normal and shiny GIF files.
 - Default configured background exists at `assets/images/default_background.jpg`.
-- Packaging spec includes `assets`, `config.json`, `README.md`, and `LICENSE`.
+- Packaging spec includes `assets`, `config/`, `README.md`, and `LICENSE`.
 - Focused pytest tests now cover config loading, save persistence, Pokemon data parsing, and GIF asset coverage.
 
-## Open Questions
+## Project Direction
 
-1. Should production builds be portable-first, with save data beside the executable, or OS-native, with save data in the user's app data directory?
-2. Are shiny rate, encounter delay, rarity weights, and enabled generations part of the intended user-facing configuration?
-3. Is borderless mode the primary production experience, or is the normal window equally important?
-4. Do you want Linux to remain source-only, or should production readiness include Linux packaging later?
+1. Portable-first Windows builds are the current product direction; revisit OS-native user data directories only if the release format changes.
+2. Shiny rate, encounter delay, rarity weights, and enabled generations should not be part of the intended user-facing configuration. Instead, they should be easy for developers to change if forking/collaborating on the repo.
+3. Windowed mode is primary production experience. However, borderless is equally important.
+4. Linux to remain source-only
 
-## Suggested Iteration Order
+## Iteration Order
 
-1. Decide portable vs OS-native data location.
-2. Consolidate paths and config validation.
-3. Separate persisted user settings from internal defaults.
-4. Replace console-only diagnostics with logging or user-visible errors.
-5. Make logger setup idempotent.
-6. Deduplicate the most repeated UI styles.
-7. Split runtime and development requirements if packaging polish is in scope.
+- [x] Validate config values before runtime use.
+- [ ] Consolidate the remaining path ownership.
+- [ ] Finish separating persisted user settings from internal defaults.
+- [ ] Replace console-only diagnostics with logging or user-visible errors.
+- [ ] Make logger setup idempotent.
+- [ ] Deduplicate the most repeated UI styles.
+- [ ] Split runtime and development requirements if packaging polish is in scope.
