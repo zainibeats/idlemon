@@ -20,7 +20,7 @@ class SettingsDialog(QDialog):
 
         Args:
             current_config: Current configuration dict
-            config_file_path: Path to config.json file
+            config_file_path: Path to persisted settings file
             project_root: Project root path for resolving relative paths
             parent: Parent widget
         """
@@ -213,7 +213,7 @@ class SettingsDialog(QDialog):
                 self.inputs['background_image'].setText(file_path)
 
     def _save_settings(self):
-        """Save settings to config.json"""
+        """Save settings to the portable config file."""
         # Collect new settings (only user-configurable ones)
         updated_settings = {
             'borderless_mode': self.inputs['borderless_mode'].isChecked(),
@@ -227,9 +227,13 @@ class SettingsDialog(QDialog):
             updated_settings['borderless_mode'] != self.current_config.get('borderless_mode', False)
         )
 
-        # Save to config.json
+        # Save only user-facing settings to the portable config file.
         try:
-            self.config_file_path.write_text(json.dumps(new_config, indent=4))
+            self.config_file_path.parent.mkdir(parents=True, exist_ok=True)
+            self.config_file_path.write_text(
+                json.dumps(updated_settings, indent=4) + "\n",
+                encoding="utf-8",
+            )
 
             # Show restart message if needed
             if borderless_changed:
@@ -247,5 +251,5 @@ class SettingsDialog(QDialog):
             QMessageBox.critical(
                 self,
                 "Error Saving Settings",
-                f"Failed to save settings to config.json:\n{str(e)}"
+                f"Failed to save settings to {self.config_file_path}:\n{str(e)}"
             )

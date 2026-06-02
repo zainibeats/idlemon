@@ -16,7 +16,7 @@ IdleMon is a small PySide6 desktop app that simulates Pokemon encounters and shi
 - Shiny counter, encounter counter, and elapsed timer
 - Searchable shiny collection with sorting and duplicate counts
 - Optional borderless desktop pet mode
-- Local portable save data in `logs/`
+- Local portable settings, save data, and logs in `config/`
 - Configurable audio and background image
 
 ## Quick Start
@@ -37,7 +37,7 @@ Use [docs/development.md](docs/development.md) for local development and project
 
 ## Configuration
 
-IdleMon stores settings in `config.json` beside the executable or project root.
+IdleMon stores settings in `config/config.json` beside the executable or project root. This keeps the Windows build portable: the extracted `IdleMon/` folder contains both the app and its writable user data.
 
 Supported user-facing settings:
 
@@ -57,17 +57,17 @@ Example:
 
 ## Save Data
 
-IdleMon stores runtime data in `logs/`:
+IdleMon stores runtime data in `config/`:
 
-- `shiny_count.bin`: total shiny count
-- `shinies_encountered.txt`: shiny collection history
-- `error.log`: runtime errors
+- `save_data.json`: shiny count and shiny collection history
+- `logs/error.log`: runtime errors
 
-Delete `logs/` to reset progress.
+Delete `config/save_data.json` to reset progress.
 
 ## Troubleshooting
 
 - If the app does not start, confirm `assets/` exists beside `IdleMon.exe` in the Windows build.
+- Keep the extracted Windows folder in a writable location so IdleMon can update `config/`.
 - If GIFs or sounds are missing, rebuild the portable folder and verify the `assets/` directory was included.
 - If Linux shows Qt plugin errors, follow the dependency notes in [docs/linux-setup.md](docs/linux-setup.md).
 

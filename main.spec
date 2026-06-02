@@ -12,7 +12,7 @@ pyside6_datas, pyside6_binaries, pyside6_hiddenimports = collect_all("PySide6")
 
 added_files = [
     ("assets", "assets"),
-    ("config.json", "."),
+    ("config", "config"),
     ("README.md", "."),
     ("LICENSE", "."),
 ]

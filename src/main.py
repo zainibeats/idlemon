@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
-from config_loader import load_config, PROJECT_ROOT
+from config_loader import get_config_file, get_logs_dir, load_config, PROJECT_ROOT
 from data_manager import DataManager
 from audio_manager import AudioManager
 from ui_manager import UIManager
@@ -132,7 +132,7 @@ class IdleMonWindow(QMainWindow):
 
     def open_settings(self):
         """Open settings dialog"""
-        config_file_path = PROJECT_ROOT / "config.json"
+        config_file_path = get_config_file()
         dialog = SettingsDialog(self.config, str(config_file_path), PROJECT_ROOT, self)
         dialog.settings_changed.connect(self.on_settings_changed)
         dialog.exec()
@@ -173,7 +173,7 @@ class IdleMonWindow(QMainWindow):
 def main():
     """Main entry point"""
     config = load_config()
-    logger = LogManager(PROJECT_ROOT / "logs")
+    logger = LogManager(get_logs_dir())
     data_manager = DataManager(config, logger)
 
     app = QApplication(sys.argv)

@@ -56,8 +56,8 @@ python src/main.py
 
 ## Notes
 
-- The default `config.json` may contain Windows-style separators. IdleMon normalizes those paths at runtime.
-- Save data is written to `logs/` in the project root.
+- The default `config/config.json` may contain Windows-style separators. IdleMon normalizes those paths at runtime.
+- Save data is written to `config/save_data.json` in the project root.
 
 ## Troubleshooting
 

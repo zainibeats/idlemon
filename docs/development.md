@@ -36,9 +36,9 @@ python src/main.py
 
 ## Configuration Notes
 
-- `config.json` is merged over in-code defaults.
-- Relative paths are resolved from the project root in source mode and from the executable folder in packaged mode.
-- Settings saves preserve advanced config keys instead of overwriting the full file.
+- `config/config.json` stores only user-facing settings.
+- Runtime save data and logs are written under `config/` to preserve the portable Windows layout.
+- Asset paths are resolved from the project root in source mode and from the executable folder in packaged mode.
 
 ## Linux
 
