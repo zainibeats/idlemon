@@ -26,7 +26,7 @@ DEFAULT_CONFIG = {
     "shiny_rate": 2000,
     "mute_audio": False,
     "borderless_mode": False,
-    "shiny_count_file": "logs/shiny_count.bin",
+    "save_data_file": "data/save_data.json",
     "background_image": "assets/images/default_background.jpg",
     "pokemon_data_files": {
         "gen1": "assets/data/gen1_pokemon_names.txt",
@@ -48,6 +48,7 @@ def _normalize_path_value(value):
 def _create_directories():
     """Create required directory structure"""
     (PROJECT_ROOT / "logs").mkdir(exist_ok=True)
+    (PROJECT_ROOT / "data").mkdir(exist_ok=True)
     (PROJECT_ROOT / "assets" / "data").mkdir(parents=True, exist_ok=True)
     for gen in range(1, 6):
         (PROJECT_ROOT / "assets" / "gifs" / f"gen{gen}" / "normal").mkdir(parents=True, exist_ok=True)
@@ -73,16 +74,16 @@ def load_config():
     config = {**DEFAULT_CONFIG, **user_config}
 
     config["background_image"] = _normalize_path_value(config["background_image"])
-    config["shiny_count_file"] = _normalize_path_value(config["shiny_count_file"])
+    config["save_data_file"] = _normalize_path_value(config["save_data_file"])
     config["pokemon_data_files"] = {
         gen: _normalize_path_value(path)
         for gen, path in config["pokemon_data_files"].items()
     }
 
     # Convert relative paths to absolute
-    path = Path(config["shiny_count_file"])
+    path = Path(config["save_data_file"])
     if not path.is_absolute():
-        config["shiny_count_file"] = str(PROJECT_ROOT / path)
+        config["save_data_file"] = str(PROJECT_ROOT / path)
 
     # Convert Pokemon data paths to absolute
     first_path = Path(next(iter(config["pokemon_data_files"].values())))

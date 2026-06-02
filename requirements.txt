@@ -1,2 +1,3 @@
 PySide6>=6.8.0      # Qt6 GUI framework (requires Python 3.9+)
 pyinstaller>=6.11.0  # For creating the executable (build only)
+pytest>=9.0.3       # Test runner

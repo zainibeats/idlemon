@@ -29,6 +29,7 @@ class IdleMonWindow(QMainWindow):
         # Store config and settings
         self.config = config
         self.logger = logger
+        self.data_manager = data_manager
         self.borderless_mode = config["borderless_mode"]
         self.shiny_paused = False
         self.collection_window = None
@@ -142,7 +143,7 @@ class IdleMonWindow(QMainWindow):
             self.collection_window.raise_()
             self.collection_window.activateWindow()
         else:
-            self.collection_window = CollectionWindow(self.logger, PROJECT_ROOT, self)
+            self.collection_window = CollectionWindow(self.data_manager, PROJECT_ROOT, self)
             self.collection_window.show()
 
     def on_settings_changed(self, new_config):
@@ -162,7 +163,7 @@ class IdleMonWindow(QMainWindow):
             event.accept()
 
     def closeEvent(self, event):
-        self.game.stop_timer()
+        self.game.stop()
         if self.borderless_mode and hasattr(self, 'tray_icon'):
             self.tray_icon.hide()
         event.accept()

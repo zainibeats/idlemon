@@ -122,6 +122,7 @@ __pypackages__/
 # logs
 shinies_encountered.txt
 shiny_count.bin
+save_data.json
 settings.local.json
 
 # Celery stuff
@@ -175,6 +176,7 @@ cython_debug/
 *.ini
 logs/shinies_encountered.txt
 /logs
+/data/save_data.json
 
 # Packaging Tools and Docs
 *.ps1

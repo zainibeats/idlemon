@@ -162,9 +162,9 @@ class CollectionItemWidget(QWidget):
 class CollectionWindow(QDialog):
     """Window displaying the shiny Pokemon collection"""
 
-    def __init__(self, logger, project_root, parent=None):
+    def __init__(self, data_manager, project_root, parent=None):
         super().__init__(parent)
-        self.logger = logger
+        self.data_manager = data_manager
         self.project_root = Path(project_root)
         self.shiny_data = []
         self.filtered_data = []
@@ -325,8 +325,8 @@ class CollectionWindow(QDialog):
         main_layout.addWidget(close_button, alignment=Qt.AlignCenter)
 
     def load_collection_data(self):
-        """Load shiny collection data from logger"""
-        all_shinies = self.logger.get_all_shinies()
+        """Load shiny collection data from save data."""
+        all_shinies = self.data_manager.get_all_shinies()
 
         self.shiny_data = []
         for pokemon_name, data in all_shinies.items():

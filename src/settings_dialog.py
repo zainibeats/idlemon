@@ -153,7 +153,7 @@ class SettingsDialog(QDialog):
         bg_label = QLabel("Background Image:")
         bg_label.setToolTip("Image displayed behind the Pokemon (normal mode only)")
         self.inputs['background_image'] = QLineEdit()
-        self.inputs['background_image'].setReadOnly(True)
+        self.inputs['background_image'].setToolTip("Enter a relative or absolute image path")
 
         browse_button = QPushButton("Browse...")
         browse_button.setStyleSheet(f"""

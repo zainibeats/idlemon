@@ -1,5 +1,22 @@
 {
-    "borderless_mode": false,
+    "encounter_delay": 2.5,
+    "rarity_weights": {
+        "Very Common": 45,
+        "Common": 30,
+        "Semi-rare": 17,
+        "Rare": 7,
+        "Very Rare": 1
+    },
+    "shiny_rate": 2000,
     "mute_audio": false,
-    "background_image": "assets/images/default_background.jpg"
+    "borderless_mode": true,
+    "save_data_file": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/data/save_data.json",
+    "background_image": "assets/images/default_background.jpg",
+    "pokemon_data_files": {
+        "gen1": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/assets/data/gen1_pokemon_names.txt",
+        "gen2": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/assets/data/gen2_pokemon_names.txt",
+        "gen3": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/assets/data/gen3_pokemon_names.txt",
+        "gen4": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/assets/data/gen4_pokemon_names.txt",
+        "gen5": "/media/cheyenne/4TBEvo/Documents/Dev/_Repos/idlemon/assets/data/gen5_pokemon_names.txt"
+    }
 }
