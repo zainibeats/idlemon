@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 import config_loader
+import paths
 
 
 def _write_required_data_files(project_root):
@@ -17,7 +18,7 @@ def _write_required_data_files(project_root):
 
 
 def test_load_config_merges_defaults_and_resolves_paths(tmp_path, monkeypatch):
-    monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     _write_required_data_files(tmp_path)
 
     config_dir = tmp_path / "config"
@@ -43,7 +44,7 @@ def test_load_config_merges_defaults_and_resolves_paths(tmp_path, monkeypatch):
 
 
 def test_load_config_reads_legacy_root_config_user_settings_only(tmp_path, monkeypatch):
-    monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     _write_required_data_files(tmp_path)
 
     (tmp_path / "config.json").write_text(
@@ -80,7 +81,7 @@ def test_load_config_rejects_invalid_runtime_defaults(
     config_overrides,
     message,
 ):
-    monkeypatch.setattr(config_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     _write_required_data_files(tmp_path)
     monkeypatch.setattr(
         config_loader,

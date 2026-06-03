@@ -24,7 +24,8 @@ python src/main.py
 ## Project Layout
 
 - `src/main.py`: application entrypoint and top-level wiring
-- `src/config_loader.py`: config loading, path resolution, and startup directory creation
+- `src/paths.py`: portable app, config, log, and asset path helpers
+- `src/config_loader.py`: config loading, validation, and startup directory creation
 - `src/game_controller.py`: encounter loop, timer loop, and shiny logic
 - `src/ui_manager.py`: main window UI and borderless mode behavior
 - `src/settings_dialog.py`: settings dialog and config persistence

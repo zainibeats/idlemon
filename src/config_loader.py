@@ -5,18 +5,9 @@ import numbers
 import sys
 from pathlib import Path
 
+import paths
+from paths import PROJECT_ROOT, get_config_file, get_logs_dir
 
-def get_base_path():
-    """Get application base path for both dev and PyInstaller modes"""
-    if getattr(sys, 'frozen', False):
-        return Path(sys.executable).parent
-    else:
-        return Path(__file__).parent.parent
-
-
-PROJECT_ROOT = get_base_path()
-CONFIG_DIR_NAME = "config"
-CONFIG_FILE_NAME = "config.json"
 USER_CONFIG_KEYS = {"borderless_mode", "mute_audio", "background_image"}
 
 DEFAULT_CONFIG = {
@@ -43,39 +34,17 @@ DEFAULT_CONFIG = {
 }
 
 
-def _normalize_path_value(value):
-    """Normalize config path strings so Windows-style paths still parse on Linux."""
-    if isinstance(value, str):
-        return value.replace("\\", "/")
-    return value
-
-
 def _create_directories():
     """Create writable portable runtime directories."""
-    config_dir = get_config_dir()
+    config_dir = paths.get_config_dir()
     config_dir.mkdir(exist_ok=True)
-    (config_dir / "logs").mkdir(exist_ok=True)
-
-
-def get_config_dir():
-    """Return the portable writable config directory."""
-    return PROJECT_ROOT / CONFIG_DIR_NAME
-
-
-def get_config_file():
-    """Return the primary persisted settings file."""
-    return get_config_dir() / CONFIG_FILE_NAME
-
-
-def get_logs_dir():
-    """Return the portable writable logs directory."""
-    return get_config_dir() / "logs"
+    paths.get_logs_dir().mkdir(exist_ok=True)
 
 
 def _load_user_config():
     """Load persisted user-facing settings from the portable config file."""
-    config_file = get_config_file()
-    legacy_config_file = PROJECT_ROOT / CONFIG_FILE_NAME
+    config_file = paths.get_config_file()
+    legacy_config_file = paths.get_legacy_config_file()
     if not config_file.exists() and legacy_config_file.exists():
         config_file = legacy_config_file
     if not config_file.exists():
@@ -96,22 +65,6 @@ def _load_user_config():
         for key, value in loaded_config.items()
         if key in USER_CONFIG_KEYS
     }
-
-
-def _resolve_asset_path(path_value):
-    """Resolve a configured asset path from the portable app root."""
-    path = Path(path_value)
-    if path.is_absolute():
-        return str(path)
-    return str(PROJECT_ROOT / path)
-
-
-def _resolve_config_path(path_value):
-    """Resolve mutable runtime paths from the portable config directory."""
-    path = Path(path_value)
-    if path.is_absolute():
-        return str(path)
-    return str(get_config_dir() / path)
 
 
 def _require_path_string(config, key):
@@ -173,17 +126,17 @@ def load_config():
     config = {**deepcopy(DEFAULT_CONFIG), **user_config}
     _validate_config(config)
 
-    config["background_image"] = _normalize_path_value(config["background_image"])
-    config["save_data_file"] = _normalize_path_value(config["save_data_file"])
+    config["background_image"] = paths.normalize_path_value(config["background_image"])
+    config["save_data_file"] = paths.normalize_path_value(config["save_data_file"])
     config["pokemon_data_files"] = {
-        gen: _normalize_path_value(path)
+        gen: paths.normalize_path_value(path)
         for gen, path in config["pokemon_data_files"].items()
     }
 
-    config["save_data_file"] = _resolve_config_path(config["save_data_file"])
+    config["save_data_file"] = str(paths.resolve_config_path(config["save_data_file"]))
 
     config["pokemon_data_files"] = {
-        gen: _resolve_asset_path(path)
+        gen: str(paths.resolve_asset_path(path))
         for gen, path in config["pokemon_data_files"].items()
     }
 

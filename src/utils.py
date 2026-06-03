@@ -1,5 +1,5 @@
 """Utility functions shared across modules"""
-from pathlib import Path
+import paths
 
 
 def find_pokemon_gif(project_root, pokemon_name, is_shiny=False):
@@ -17,7 +17,13 @@ def find_pokemon_gif(project_root, pokemon_name, is_shiny=False):
     gif_subdir = "shiny" if is_shiny else "normal"
 
     for gen in range(1, 6):
-        gif_path = Path(project_root) / "assets" / "gifs" / f"gen{gen}" / gif_subdir / f"{pokemon_name}.gif"
+        gif_path = paths.asset_path(
+            "gifs",
+            f"gen{gen}",
+            gif_subdir,
+            f"{pokemon_name}.gif",
+            root=project_root,
+        )
         if gif_path.exists():
             return gif_path
 

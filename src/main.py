@@ -3,7 +3,8 @@ import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
-from config_loader import get_config_file, get_logs_dir, load_config, PROJECT_ROOT
+import paths
+from config_loader import load_config
 from data_manager import DataManager
 from audio_manager import AudioManager
 from ui_manager import UIManager
@@ -47,21 +48,16 @@ class IdleMonWindow(QMainWindow):
 
         # Initialize managers
         self.game = GameController(config, data_manager, self.logger)
-        self.audio = AudioManager(PROJECT_ROOT, config["mute_audio"], self.logger)
+        self.audio = AudioManager(paths.PROJECT_ROOT, config["mute_audio"], self.logger)
 
         # Setup background path
-        background_image_path = Path(config["background_image"])
-        if not background_image_path.is_absolute():
-            background_path = PROJECT_ROOT / background_image_path
-        else:
-            background_path = background_image_path
-
-        if not background_path.exists():
-            print(f"Warning: Could not find background image at {background_path}")
-            background_path = PROJECT_ROOT / "assets" / "images" / "default_background.jpg"
+        requested_background_path = paths.resolve_asset_path(config["background_image"])
+        background_path = paths.resolve_background_path(config["background_image"])
+        if background_path != requested_background_path:
+            print(f"Warning: Could not find background image at {requested_background_path}")
 
         # Initialize UI
-        self.ui = UIManager(self, PROJECT_ROOT, background_path, self.borderless_mode)
+        self.ui = UIManager(self, paths.PROJECT_ROOT, background_path, self.borderless_mode)
         self.ui.setup_ui()
 
         # Connect signals
@@ -132,8 +128,8 @@ class IdleMonWindow(QMainWindow):
 
     def open_settings(self):
         """Open settings dialog"""
-        config_file_path = get_config_file()
-        dialog = SettingsDialog(self.config, str(config_file_path), PROJECT_ROOT, self)
+        config_file_path = paths.get_config_file()
+        dialog = SettingsDialog(self.config, str(config_file_path), paths.PROJECT_ROOT, self)
         dialog.settings_changed.connect(self.on_settings_changed)
         dialog.exec()
 
@@ -143,7 +139,7 @@ class IdleMonWindow(QMainWindow):
             self.collection_window.raise_()
             self.collection_window.activateWindow()
         else:
-            self.collection_window = CollectionWindow(self.data_manager, PROJECT_ROOT, self)
+            self.collection_window = CollectionWindow(self.data_manager, paths.PROJECT_ROOT, self)
             self.collection_window.show()
 
     def on_settings_changed(self, new_config):
@@ -173,7 +169,7 @@ class IdleMonWindow(QMainWindow):
 def main():
     """Main entry point"""
     config = load_config()
-    logger = LogManager(get_logs_dir())
+    logger = LogManager(paths.get_logs_dir())
     data_manager = DataManager(config, logger)
 
     app = QApplication(sys.argv)
