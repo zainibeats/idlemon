@@ -43,6 +43,38 @@ def test_load_config_merges_defaults_and_resolves_paths(tmp_path, monkeypatch):
     assert all(Path(path).is_absolute() for path in config["pokemon_data_files"].values())
 
 
+def test_load_config_ignores_persisted_internal_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    _write_required_data_files(tmp_path)
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    (config_dir / "config.json").write_text(
+        json.dumps(
+            {
+                "encounter_delay": 0.1,
+                "rarity_weights": {"Common": 1},
+                "shiny_rate": 1,
+                "save_data_file": "/tmp/custom-save.json",
+                "pokemon_data_files": {"gen1": "/tmp/gen1.txt"},
+                "mute_audio": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    config = config_loader.load_config()
+
+    assert config["encounter_delay"] == config_loader.DEFAULT_RUNTIME_CONFIG["encounter_delay"]
+    assert config["rarity_weights"] == config_loader.DEFAULT_RUNTIME_CONFIG["rarity_weights"]
+    assert config["shiny_rate"] == config_loader.DEFAULT_RUNTIME_CONFIG["shiny_rate"]
+    assert config["save_data_file"] == str(config_dir / "save_data.json")
+    assert set(config["pokemon_data_files"]) == set(
+        config_loader.DEFAULT_RUNTIME_CONFIG["pokemon_data_files"]
+    )
+    assert config["mute_audio"] is True
+
+
 def test_load_config_reads_legacy_root_config_user_settings_only(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     _write_required_data_files(tmp_path)
@@ -83,10 +115,25 @@ def test_load_config_rejects_invalid_runtime_defaults(
 ):
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     _write_required_data_files(tmp_path)
+    runtime_overrides = {
+        key: value
+        for key, value in config_overrides.items()
+        if key in config_loader.DEFAULT_RUNTIME_CONFIG
+    }
+    user_overrides = {
+        key: value
+        for key, value in config_overrides.items()
+        if key in config_loader.DEFAULT_USER_SETTINGS
+    }
     monkeypatch.setattr(
         config_loader,
-        "DEFAULT_CONFIG",
-        {**config_loader.DEFAULT_CONFIG, **config_overrides},
+        "DEFAULT_RUNTIME_CONFIG",
+        {**config_loader.DEFAULT_RUNTIME_CONFIG, **runtime_overrides},
+    )
+    monkeypatch.setattr(
+        config_loader,
+        "DEFAULT_USER_SETTINGS",
+        {**config_loader.DEFAULT_USER_SETTINGS, **user_overrides},
     )
 
     with pytest.raises(ValueError, match=message):

@@ -8,9 +8,15 @@ from pathlib import Path
 import paths
 from paths import PROJECT_ROOT, get_config_file, get_logs_dir
 
-USER_CONFIG_KEYS = {"borderless_mode", "mute_audio", "background_image"}
+DEFAULT_USER_SETTINGS = {
+    "mute_audio": False,
+    "borderless_mode": False,
+    "background_image": "assets/images/default_background.jpg",
+}
 
-DEFAULT_CONFIG = {
+USER_CONFIG_KEYS = frozenset(DEFAULT_USER_SETTINGS)
+
+DEFAULT_RUNTIME_CONFIG = {
     "encounter_delay": 2.5,
     "rarity_weights": {
         "Very Common": 45,
@@ -20,10 +26,7 @@ DEFAULT_CONFIG = {
         "Very Rare": 1
     },
     "shiny_rate": 2000,
-    "mute_audio": False,
-    "borderless_mode": False,
     "save_data_file": "save_data.json",
-    "background_image": "assets/images/default_background.jpg",
     "pokemon_data_files": {
         "gen1": "assets/data/gen1_pokemon_names.txt",
         "gen2": "assets/data/gen2_pokemon_names.txt",
@@ -31,6 +34,11 @@ DEFAULT_CONFIG = {
         "gen4": "assets/data/gen4_pokemon_names.txt",
         "gen5": "assets/data/gen5_pokemon_names.txt"
     }
+}
+
+DEFAULT_CONFIG = {
+    **deepcopy(DEFAULT_RUNTIME_CONFIG),
+    **deepcopy(DEFAULT_USER_SETTINGS),
 }
 
 
@@ -123,7 +131,11 @@ def load_config():
     _create_directories()
 
     user_config = _load_user_config()
-    config = {**deepcopy(DEFAULT_CONFIG), **user_config}
+    config = {
+        **deepcopy(DEFAULT_RUNTIME_CONFIG),
+        **deepcopy(DEFAULT_USER_SETTINGS),
+        **user_config,
+    }
     _validate_config(config)
 
     config["background_image"] = paths.normalize_path_value(config["background_image"])
