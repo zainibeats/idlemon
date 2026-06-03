@@ -126,4 +126,4 @@ This is optional, but it aligns with common Python packaging conventions.
 - [x] Replace console-only diagnostics with logging or user-visible errors.
 - [x] Make logger setup idempotent.
 - [x] Deduplicate the most repeated UI styles.
-- [ ] Split runtime and development requirements if packaging polish is in scope.
+- [x] Split runtime and development requirements if packaging polish is in scope.

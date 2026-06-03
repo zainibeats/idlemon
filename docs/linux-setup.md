@@ -4,7 +4,7 @@ IdleMon is supported on Linux by running from source. There is no Linux binary r
 
 ## Requirements
 
-- Python 3.9 or newer
+- Python 3.10 or newer
 - A desktop session with X11 or Wayland
 - Audio support through PulseAudio or PipeWire
 

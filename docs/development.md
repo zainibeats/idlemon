@@ -4,13 +4,13 @@ This guide covers local development for IdleMon `0.3.0`.
 
 ## Requirements
 
-- Python 3.9 or later
+- Python 3.10 or later
 - A virtual environment is recommended
 
-Install Python dependencies:
+Install development dependencies:
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 ```
 
 ## Run From Source

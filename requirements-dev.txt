@@ -1,0 +1,4 @@
+-r requirements.txt
+
+pyinstaller>=6.20.0  # Windows portable build tooling
+pytest>=9.0.3        # Test runner
