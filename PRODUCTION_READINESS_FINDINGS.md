@@ -121,7 +121,7 @@ This is optional, but it aligns with common Python packaging conventions.
 ## Iteration Order
 
 - [x] Validate config values before runtime use.
-- [ ] Consolidate the remaining path ownership.
+- [x] Consolidate the remaining path ownership.
 - [ ] Finish separating persisted user settings from internal defaults.
 - [ ] Replace console-only diagnostics with logging or user-visible errors.
 - [ ] Make logger setup idempotent.
