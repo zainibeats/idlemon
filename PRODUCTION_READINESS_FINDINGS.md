@@ -123,7 +123,7 @@ This is optional, but it aligns with common Python packaging conventions.
 - [x] Validate config values before runtime use.
 - [x] Consolidate the remaining path ownership.
 - [x] Finish separating persisted user settings from internal defaults.
-- [ ] Replace console-only diagnostics with logging or user-visible errors.
+- [x] Replace console-only diagnostics with logging or user-visible errors.
 - [ ] Make logger setup idempotent.
 - [ ] Deduplicate the most repeated UI styles.
 - [ ] Split runtime and development requirements if packaging polish is in scope.

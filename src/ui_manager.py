@@ -27,7 +27,7 @@ class ClickableLabel(QLabel):
 class UIManager:
     """Manages the Qt user interface components"""
 
-    def __init__(self, main_window, project_root, background_path, borderless_mode=False):
+    def __init__(self, main_window, project_root, background_path, borderless_mode=False, logger=None):
         """
         Initialize UI manager
 
@@ -36,11 +36,13 @@ class UIManager:
             project_root: Base path for assets
             background_path: Path to background image
             borderless_mode: Whether to use borderless transparent mode
+            logger: Optional LogManager instance
         """
         self.window = main_window
         self.project_root = Path(project_root)
         self.background_path = Path(background_path)
         self.borderless_mode = borderless_mode
+        self.logger = logger
 
         # UI components (will be created in setup)
         self.info_label = None
@@ -252,7 +254,8 @@ class UIManager:
         gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny)
 
         if not gif_path:
-            print(f"GIF file not found for {pokemon_name}")
+            if self.logger is not None:
+                self.logger.log_error(f"GIF file not found for {pokemon_name}")
             return
 
         # Create and setup QMovie

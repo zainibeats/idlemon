@@ -1,10 +1,10 @@
 """IdleMon - Pokemon encounter simulator with shiny hunting"""
 import sys
 from pathlib import Path
-from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt
 import paths
-from config_loader import load_config
+from config_loader import ConfigError, load_config
 from data_manager import DataManager
 from audio_manager import AudioManager
 from ui_manager import UIManager
@@ -13,11 +13,6 @@ from settings_dialog import SettingsDialog
 from collection_window import CollectionWindow
 from logger import LogManager
 from version import APP_VERSION
-
-# Print startup info
-print("Starting IdleMon...")
-print(f"Executable path: {sys.executable}")
-print(f"Working directory: {Path.cwd()}")
 
 
 class IdleMonWindow(QMainWindow):
@@ -54,10 +49,18 @@ class IdleMonWindow(QMainWindow):
         requested_background_path = paths.resolve_asset_path(config["background_image"])
         background_path = paths.resolve_background_path(config["background_image"])
         if background_path != requested_background_path:
-            print(f"Warning: Could not find background image at {requested_background_path}")
+            self.logger.log_warning(
+                f"Could not find background image at {requested_background_path}; using default."
+            )
 
         # Initialize UI
-        self.ui = UIManager(self, paths.PROJECT_ROOT, background_path, self.borderless_mode)
+        self.ui = UIManager(
+            self,
+            paths.PROJECT_ROOT,
+            background_path,
+            self.borderless_mode,
+            self.logger,
+        )
         self.ui.setup_ui()
 
         # Connect signals
@@ -168,12 +171,21 @@ class IdleMonWindow(QMainWindow):
 
 def main():
     """Main entry point"""
-    config = load_config()
     logger = LogManager(paths.get_logs_dir())
-    data_manager = DataManager(config, logger)
+    logger.log_info("Starting IdleMon.")
+    logger.log_info(f"Executable path: {sys.executable}")
+    logger.log_info(f"Working directory: {Path.cwd()}")
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    try:
+        config = load_config(logger)
+    except ConfigError as e:
+        QMessageBox.critical(None, "IdleMon Startup Error", str(e))
+        sys.exit(1)
+
+    data_manager = DataManager(config, logger)
 
     window = IdleMonWindow(config, data_manager, logger)
     window.show()

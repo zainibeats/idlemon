@@ -80,10 +80,10 @@ class GameController:
         if random.randint(1, self.shiny_rate) == 1:
             return True
 
-        # Easter egg: occasionally hint that a shiny is nearby
+        # Easter egg: occasionally record that a shiny is nearby.
         hint_rate = max(1, self.shiny_rate // NEARBY_SHINY_HINT_DIVISOR)
         if random.randint(1, hint_rate) == 1:
-            print("You hear a shiny Pokémon nearby...")
+            self.logger.log_info("You hear a shiny Pokemon nearby...")
 
         return False
 
@@ -127,7 +127,7 @@ class GameController:
 
         self.pokemon_data = self.data_manager.load_pokemon_data()
         if not self.pokemon_data:
-            print("No Pokémon data available. Exiting encounter loop.")
+            self.logger.log_error("No Pokemon data available. Exiting encounter loop.")
             return
 
         self.pokemon_list = list(self.pokemon_data.keys())
@@ -162,9 +162,9 @@ class GameController:
             self.shiny_found_flag = True
             self.stop()
             self.signals.shiny_found.emit(pokemon_name, pokemon_rarity)
-            print(f"Congrats!!! You found a shiny {pokemon_name} after {self.total_encounters} encounters!")
-        else:
-            print(f"You encountered a wild {pokemon_name}!")
+            self.logger.log_info(
+                f"Found shiny {pokemon_name} after {self.total_encounters} encounters."
+            )
 
     def handle_shiny_found(self, pokemon_name, rarity):
         """

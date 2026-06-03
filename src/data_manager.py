@@ -56,7 +56,7 @@ class DataManager:
             return save_data
         except (json.JSONDecodeError, ValueError) as e:
             self.logger.log_error(f"Error loading save data: {e}")
-            print(f"Warning: {self.save_data_file} is corrupted. Resetting save data.")
+            self.logger.log_warning(f"{self.save_data_file} is corrupted. Resetting save data.")
             save_data = self._default_save_data()
             self._write_save_data(save_data)
             return save_data

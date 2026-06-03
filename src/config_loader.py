@@ -2,7 +2,6 @@
 from copy import deepcopy
 import json
 import numbers
-import sys
 from pathlib import Path
 
 import paths
@@ -42,6 +41,10 @@ DEFAULT_CONFIG = {
 }
 
 
+class ConfigError(RuntimeError):
+    """Raised when configuration prevents the app from starting."""
+
+
 def _create_directories():
     """Create writable portable runtime directories."""
     config_dir = paths.get_config_dir()
@@ -49,7 +52,12 @@ def _create_directories():
     paths.get_logs_dir().mkdir(exist_ok=True)
 
 
-def _load_user_config():
+def _log_error(logger, message):
+    if logger is not None:
+        logger.log_error(message)
+
+
+def _load_user_config(logger=None):
     """Load persisted user-facing settings from the portable config file."""
     config_file = paths.get_config_file()
     legacy_config_file = paths.get_legacy_config_file()
@@ -61,11 +69,11 @@ def _load_user_config():
     try:
         loaded_config = json.loads(config_file.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, ValueError) as e:
-        print(f"Error loading config file: {e}. Using default settings.")
+        _log_error(logger, f"Error loading config file: {e}. Using default settings.")
         return {}
 
     if not isinstance(loaded_config, dict):
-        print("Error loading config file: root value must be an object. Using default settings.")
+        _log_error(logger, "Error loading config file: root value must be an object. Using default settings.")
         return {}
 
     return {
@@ -126,11 +134,11 @@ def _validate_config(config):
             raise ValueError(f"{key} must be a boolean")
 
 
-def load_config():
+def load_config(logger=None):
     """Load configuration from file, merge with defaults, and validate required data files."""
     _create_directories()
 
-    user_config = _load_user_config()
+    user_config = _load_user_config(logger)
     config = {
         **deepcopy(DEFAULT_RUNTIME_CONFIG),
         **deepcopy(DEFAULT_USER_SETTINGS),
@@ -157,9 +165,9 @@ def load_config():
         if not Path(file_path).exists()
     ]
     if missing_files:
-        print("Error: required Pokemon data files are missing:")
-        for file_path in missing_files:
-            print(f" - {file_path}")
-        sys.exit(1)
+        missing_list = "\n".join(f" - {file_path}" for file_path in missing_files)
+        message = f"Required Pokemon data files are missing:\n{missing_list}"
+        _log_error(logger, message)
+        raise ConfigError(message)
 
     return config
