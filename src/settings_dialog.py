@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from ui_colors import UIColors
+from ui_styles import button_style, group_box_style
 
 
 class SettingsDialog(QDialog):
@@ -56,37 +57,23 @@ class SettingsDialog(QDialog):
         button_layout.addStretch()
 
         save_button = QPushButton("Save")
-        save_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {UIColors.BUTTON_PRIMARY};
-                color: {UIColors.TEXT_PRIMARY};
-                font-weight: bold;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
-                min-width: 80px;
-            }}
-            QPushButton:hover {{
-                background-color: {UIColors.ACCENT_HOVER};
-            }}
-        """)
+        save_button.setStyleSheet(
+            button_style(
+                UIColors.BUTTON_PRIMARY,
+                UIColors.ACCENT_HOVER,
+                min_width=80,
+            )
+        )
         save_button.clicked.connect(self._save_settings)
 
         cancel_button = QPushButton("Cancel")
-        cancel_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {UIColors.BUTTON_CANCEL};
-                color: {UIColors.TEXT_PRIMARY};
-                font-weight: bold;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
-                min-width: 80px;
-            }}
-            QPushButton:hover {{
-                background-color: {UIColors.BORDER_DEFAULT};
-            }}
-        """)
+        cancel_button.setStyleSheet(
+            button_style(
+                UIColors.BUTTON_CANCEL,
+                UIColors.BORDER_DEFAULT,
+                min_width=80,
+            )
+        )
         cancel_button.clicked.connect(self.reject)
 
         button_layout.addWidget(save_button)
@@ -98,21 +85,7 @@ class SettingsDialog(QDialog):
     def _create_display_group(self):
         """Create display settings group"""
         group = QGroupBox("Display & Audio Settings")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                color: {UIColors.TEXT_PRIMARY};
-                border: 2px solid {UIColors.GROUP_DISPLAY};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        group.setStyleSheet(group_box_style(UIColors.GROUP_DISPLAY))
         layout = QVBoxLayout()
 
         # Borderless Mode
@@ -131,21 +104,7 @@ class SettingsDialog(QDialog):
     def _create_visual_group(self):
         """Create visual settings group"""
         group = QGroupBox("Visual Settings")
-        group.setStyleSheet(f"""
-            QGroupBox {{
-                font-weight: bold;
-                color: {UIColors.TEXT_PRIMARY};
-                border: 2px solid {UIColors.GROUP_VISUAL};
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }}
-        """)
+        group.setStyleSheet(group_box_style(UIColors.GROUP_VISUAL))
         layout = QVBoxLayout()
 
         # Background Image
@@ -156,18 +115,15 @@ class SettingsDialog(QDialog):
         self.inputs['background_image'].setToolTip("Enter a relative or absolute image path")
 
         browse_button = QPushButton("Browse...")
-        browse_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {UIColors.BUTTON_SECONDARY};
-                color: {UIColors.TEXT_PRIMARY};
-                border: none;
-                border-radius: 3px;
-                padding: 5px 15px;
-            }}
-            QPushButton:hover {{
-                background-color: {UIColors.PRIMARY_BLUE};
-            }}
-        """)
+        browse_button.setStyleSheet(
+            button_style(
+                UIColors.BUTTON_SECONDARY,
+                UIColors.PRIMARY_BLUE,
+                border_radius=3,
+                padding="5px 15px",
+                bold=False,
+            )
+        )
         browse_button.clicked.connect(self._browse_background)
 
         bg_layout.addWidget(bg_label)

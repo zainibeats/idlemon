@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QMovie
 from ui_colors import UIColors
+from ui_styles import button_style, transparent_label_style
 from utils import find_pokemon_gif
 
 # UI Constants
@@ -119,15 +120,7 @@ class UIManager:
 
         # Info label
         self.info_label = QLabel("Walking through the Pokemon world...")
-        self.info_label.setStyleSheet(f"""
-            QLabel {{
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 12px;
-                font-weight: bold;
-                background: transparent;
-                padding: 5px;
-            }}
-        """)
+        self.info_label.setStyleSheet(transparent_label_style(font_size=12, bold=True))
         self.info_label.setWordWrap(True)
         self.info_label.setFixedWidth(STATS_PANEL_WIDTH)
         self.info_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
@@ -135,25 +128,12 @@ class UIManager:
 
         # Encounter counter
         self.encounter_label = QLabel("Encounters: 0")
-        self.encounter_label.setStyleSheet(f"""
-            QLabel {{
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 11px;
-                background: transparent;
-                padding: 5px;
-            }}
-        """)
+        self.encounter_label.setStyleSheet(transparent_label_style())
         stats_layout.addWidget(self.encounter_label)
 
         # Shiny counter (clickable)
         self.shiny_label = ClickableLabel("Shiny Pokémon Found: 0")
-        self.shiny_label.setStyleSheet(f"""
-            QLabel {{
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 11px;
-                background: transparent;
-                padding: 5px;
-            }}
+        self.shiny_label.setStyleSheet(transparent_label_style() + f"""
             QLabel:hover {{
                 color: {UIColors.TEXT_SHINY};
                 text-decoration: underline;
@@ -165,37 +145,25 @@ class UIManager:
 
         # Timer
         self.stats_label = QLabel("Time Elapsed: 00:00")
-        self.stats_label.setStyleSheet(f"""
-            QLabel {{
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 11px;
-                background: transparent;
-                padding: 5px;
-            }}
-        """)
+        self.stats_label.setStyleSheet(transparent_label_style())
         stats_layout.addWidget(self.stats_label)
 
         # Settings button
         self.settings_button = QPushButton("⚙ Settings")
-        self.settings_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {UIColors.BUTTON_SECONDARY};
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 10px;
-                font-weight: bold;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
+        self.settings_button.setStyleSheet(
+            button_style(
+                UIColors.BUTTON_SECONDARY,
+                UIColors.PRIMARY_BLUE,
+                pressed_color=UIColors.PRIMARY_BLUE,
+                pressed_opacity=0.8,
+                font_size=10,
+                padding="5px",
+            ) + """
+            QPushButton {
                 margin-top: 5px;
-            }}
-            QPushButton:hover {{
-                background-color: {UIColors.PRIMARY_BLUE};
-            }}
-            QPushButton:pressed {{
-                background-color: {UIColors.PRIMARY_BLUE};
-                opacity: 0.8;
-            }}
-        """)
+            }
+            """
+        )
         stats_layout.addWidget(self.settings_button)
 
         self.foreground_layout.addWidget(stats_widget, alignment=Qt.AlignTop | Qt.AlignLeft)
@@ -222,23 +190,16 @@ class UIManager:
         self.continue_button.setFocusPolicy(Qt.NoFocus)
         self.continue_button.setAutoDefault(False)
         self.continue_button.setDefault(False)
-        self.continue_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {UIColors.BUTTON_PRIMARY};
-                color: {UIColors.TEXT_PRIMARY};
-                font-size: 14px;
-                font-weight: bold;
-                border: none;
-                border-radius: 20px;
-                padding: 10px;
-            }}
-            QPushButton:hover {{
-                background-color: {UIColors.ACCENT_HOVER};
-            }}
-            QPushButton:pressed {{
-                background-color: {UIColors.ACCENT_PRESSED};
-            }}
-        """)
+        self.continue_button.setStyleSheet(
+            button_style(
+                UIColors.BUTTON_PRIMARY,
+                UIColors.ACCENT_HOVER,
+                pressed_color=UIColors.ACCENT_PRESSED,
+                font_size=14,
+                border_radius=20,
+                padding="10px",
+            )
+        )
         self.continue_button.hide()
         self.foreground_layout.addWidget(self.continue_button, alignment=Qt.AlignCenter)
         self.foreground_layout.addStretch()
@@ -276,26 +237,12 @@ class UIManager:
 
         if is_shiny:
             self.info_label.setText(f"{pokemon_name} - {rarity} (Shiny!)")
-            self.info_label.setStyleSheet(f"""
-                QLabel {{
-                    color: {UIColors.TEXT_SHINY};
-                    font-size: 12px;
-                    font-weight: bold;
-                    background: transparent;
-                    padding: 5px;
-                }}
-            """)
+            self.info_label.setStyleSheet(
+                transparent_label_style(UIColors.TEXT_SHINY, font_size=12, bold=True)
+            )
         else:
             self.info_label.setText(f"{pokemon_name} - {rarity}")
-            self.info_label.setStyleSheet(f"""
-                QLabel {{
-                    color: {UIColors.TEXT_PRIMARY};
-                    font-size: 12px;
-                    font-weight: bold;
-                    background: transparent;
-                    padding: 5px;
-                }}
-            """)
+            self.info_label.setStyleSheet(transparent_label_style(font_size=12, bold=True))
 
     def update_encounter_count(self, count):
         """Update encounter counter display"""

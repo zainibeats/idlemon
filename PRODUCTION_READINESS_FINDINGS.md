@@ -125,5 +125,5 @@ This is optional, but it aligns with common Python packaging conventions.
 - [x] Finish separating persisted user settings from internal defaults.
 - [x] Replace console-only diagnostics with logging or user-visible errors.
 - [x] Make logger setup idempotent.
-- [ ] Deduplicate the most repeated UI styles.
+- [x] Deduplicate the most repeated UI styles.
 - [ ] Split runtime and development requirements if packaging polish is in scope.
