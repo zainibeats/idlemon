@@ -9,7 +9,7 @@ NEARBY_SHINY_HINT_DIVISOR = 5  # 1 in (shiny_rate // 5) chance to show nearby hi
 
 class GameSignals(QObject):
     """Signals for UI updates"""
-    update_encounter = Signal(str, str, bool)  # pokemon_name, rarity, is_shiny
+    update_encounter = Signal(str, str, bool, str)  # pokemon_name, rarity, is_shiny, gif_path
     update_counter = Signal(int)
     update_timer = Signal(int)
     shiny_found = Signal(str, str)  # pokemon_name, rarity
@@ -56,7 +56,7 @@ class GameController:
         self.encounter_timer.setInterval(max(1, int(self.encounter_delay * 1000)))
         self.encounter_timer.timeout.connect(self._run_encounter)
         self.pokemon_data = {}
-        self.pokemon_list = []
+        self.pokemon_catalog = []
         self.weights = []
 
     def initialize_shiny_count(self):
@@ -125,13 +125,19 @@ class GameController:
         if self.encounter_timer.isActive():
             return
 
-        self.pokemon_data = self.data_manager.load_pokemon_data()
-        if not self.pokemon_data:
+        self.pokemon_catalog = self.data_manager.load_pokemon_catalog()
+        if not self.pokemon_catalog:
             self.logger.log_error("No Pokemon data available. Exiting encounter loop.")
             return
 
-        self.pokemon_list = list(self.pokemon_data.keys())
-        self.weights = [self.rarity_weights.get(rarity, 0) for rarity in self.pokemon_data.values()]
+        self.pokemon_data = {
+            pokemon["name"]: pokemon["rarity"]
+            for pokemon in self.pokemon_catalog
+        }
+        self.weights = [
+            self.rarity_weights.get(pokemon["rarity"], 0)
+            for pokemon in self.pokemon_catalog
+        ]
         self.encounter_timer.start()
 
     def stop_encounter_loop(self):
@@ -152,11 +158,13 @@ class GameController:
         self.total_encounters += 1
         self.signals.update_counter.emit(self.total_encounters)
 
-        pokemon_name = random.choices(self.pokemon_list, weights=self.weights, k=1)[0]
-        pokemon_rarity = self.pokemon_data[pokemon_name]
+        pokemon = random.choices(self.pokemon_catalog, weights=self.weights, k=1)[0]
+        pokemon_name = pokemon["name"]
+        pokemon_rarity = pokemon["rarity"]
         is_shiny = self.check_shiny()
+        gif_path = pokemon["shiny_gif"] if is_shiny else pokemon["normal_gif"]
 
-        self.signals.update_encounter.emit(pokemon_name, pokemon_rarity, is_shiny)
+        self.signals.update_encounter.emit(pokemon_name, pokemon_rarity, is_shiny, str(gif_path))
 
         if is_shiny:
             self.shiny_found_flag = True

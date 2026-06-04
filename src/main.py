@@ -97,8 +97,8 @@ class IdleMonWindow(QMainWindow):
         self.game.signals.update_timer.connect(self.on_timer_update)
         self.game.signals.shiny_found.connect(self.on_shiny_found)
 
-    def on_encounter_update(self, pokemon_name, rarity, is_shiny):
-        self.ui.update_encounter_display(pokemon_name, rarity, is_shiny)
+    def on_encounter_update(self, pokemon_name, rarity, is_shiny, gif_path):
+        self.ui.update_encounter_display(pokemon_name, rarity, is_shiny, gif_path)
 
     def on_counter_update(self, count):
         self.ui.update_encounter_count(count)

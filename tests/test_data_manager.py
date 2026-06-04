@@ -65,3 +65,26 @@ def test_load_pokemon_data_skips_invalid_lines_and_caches(tmp_path):
     assert first_load == {"Bulbasaur": "Very Common", "Charmander": "Common"}
     assert manager.load_pokemon_data() is first_load
     assert any("Invalid entry" in message for message in logger.errors)
+
+
+def test_load_pokemon_catalog_resolves_gif_paths_and_caches(tmp_path):
+    data_dir = tmp_path / "assets" / "data"
+    data_dir.mkdir(parents=True)
+    data_file = data_dir / "gen1_pokemon_names.txt"
+    data_file.write_text("Bulbasaur,Very Common\n", encoding="utf-8")
+
+    manager = DataManager(_config(tmp_path, {"gen1": data_file}), StubLogger())
+
+    catalog = manager.load_pokemon_catalog()
+
+    assert catalog == [
+        {
+            "name": "Bulbasaur",
+            "rarity": "Very Common",
+            "generation": "gen1",
+            "normal_gif": tmp_path / "assets" / "gifs" / "gen1" / "normal" / "Bulbasaur.gif",
+            "shiny_gif": tmp_path / "assets" / "gifs" / "gen1" / "shiny" / "Bulbasaur.gif",
+        }
+    ]
+    assert manager.load_pokemon_catalog() is catalog
+    assert manager.load_pokemon_data() == {"Bulbasaur": "Very Common"}

@@ -1,11 +1,10 @@
 """UI management module for Qt interface"""
 from pathlib import Path
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPixmap, QMovie
 from ui_colors import UIColors
 from ui_styles import button_style, transparent_label_style
-from utils import find_pokemon_gif
 
 # UI Constants
 GIF_SCALE_FACTOR = 1.5
@@ -54,6 +53,7 @@ class UIManager:
         self.continue_button = None
         self.settings_button = None
         self.foreground_layout = None
+        self.current_movie = None
 
     def setup_ui(self):
         """Setup the main UI with all components"""
@@ -204,32 +204,42 @@ class UIManager:
         self.foreground_layout.addWidget(self.continue_button, alignment=Qt.AlignCenter)
         self.foreground_layout.addStretch()
 
-    def display_pokemon_gif(self, pokemon_name, is_shiny=False):
+    def display_pokemon_gif(self, pokemon_name, gif_path):
         """
         Display Pokemon GIF animation
 
         Args:
             pokemon_name: Name of Pokemon
-            is_shiny: Whether to show shiny version
+            gif_path: Resolved path to the GIF file
         """
-        gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny)
+        gif_path = Path(gif_path)
 
-        if not gif_path:
+        if not gif_path.exists():
             if self.logger is not None:
-                self.logger.log_error(f"GIF file not found for {pokemon_name}")
+                self.logger.log_error(f"GIF file not found for {pokemon_name}: {gif_path}")
             return
+
+        if self.current_movie is not None:
+            self.current_movie.stop()
 
         # Create and setup QMovie
         movie = QMovie(str(gif_path))
-        movie.setScaledSize(movie.scaledSize() * GIF_SCALE_FACTOR)
+        movie.jumpToFrame(0)
+        frame_size = movie.currentPixmap().size()
+        if frame_size.isValid():
+            movie.setScaledSize(QSize(
+                int(frame_size.width() * GIF_SCALE_FACTOR),
+                int(frame_size.height() * GIF_SCALE_FACTOR),
+            ))
         movie.setSpeed(GIF_ANIMATION_SPEED)
 
         self.pokemon_label.setMovie(movie)
+        self.current_movie = movie
         movie.start()
 
-    def update_encounter_display(self, pokemon_name, rarity, is_shiny):
+    def update_encounter_display(self, pokemon_name, rarity, is_shiny, gif_path):
         """Update the encounter info display"""
-        self.display_pokemon_gif(pokemon_name, is_shiny)
+        self.display_pokemon_gif(pokemon_name, gif_path)
 
         # Skip text updates in borderless mode
         if self.borderless_mode:

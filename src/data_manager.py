@@ -15,6 +15,7 @@ class DataManager:
             for gen, path in config["pokemon_data_files"].items()
         }
         self.pokemon_data_cache = None
+        self.pokemon_catalog_cache = None
 
     def _default_save_data(self):
         """Return an empty save data structure."""
@@ -124,3 +125,38 @@ class DataManager:
 
         self.pokemon_data_cache = pokemon_data
         return pokemon_data
+
+    def load_pokemon_catalog(self):
+        """Load Pokemon metadata with resolved normal and shiny GIF paths."""
+        if self.pokemon_catalog_cache is not None:
+            return self.pokemon_catalog_cache
+
+        catalog = []
+        pokemon_data = {}
+
+        for gen, file_path in self.pokemon_data_files.items():
+            try:
+                asset_root = file_path.parent.parent
+                for line in file_path.read_text(encoding="utf-8").splitlines():
+                    try:
+                        name, rarity = line.strip().split(',')
+                    except ValueError:
+                        self.logger.log_error(f"Invalid entry in {file_path}: {line.strip()}")
+                        continue
+
+                    normal_gif = asset_root / "gifs" / gen / "normal" / f"{name}.gif"
+                    shiny_gif = asset_root / "gifs" / gen / "shiny" / f"{name}.gif"
+                    catalog.append({
+                        "name": name,
+                        "rarity": rarity,
+                        "generation": gen,
+                        "normal_gif": normal_gif,
+                        "shiny_gif": shiny_gif,
+                    })
+                    pokemon_data[name] = rarity
+            except Exception as e:
+                self.logger.log_error(f"Error loading Pokemon data for {gen}: {e}")
+
+        self.pokemon_catalog_cache = catalog
+        self.pokemon_data_cache = pokemon_data
+        return self.pokemon_catalog_cache
