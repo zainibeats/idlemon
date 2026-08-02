@@ -45,6 +45,48 @@ most one across repeated encounters, grid rebuilds, and hovering every tile. A s
 run of the real window covered 4,129 encounters (~2.9 hours at the default delay) plus
 six collection open/rebuild/hover/close cycles with a flat descriptor count.
 
+## Resolved: borderless desktop pet mode on Linux (X11 and Wayland)
+
+Review date: 2026-08-02
+
+Reported on KDE Plasma: the right-click menu opened in a screen corner, and a large
+invisible window around the sprite blocked the desktop and made the pet awkward to
+place.
+
+Root causes, all platform behaviour that Windows happens to paper over:
+
+- **Input region.** `WA_TranslucentBackground` is only click-through on Windows, where
+  transparent pixels of a layered window pass clicks to the desktop. On X11 and Wayland
+  transparency is purely visual and the entire window rectangle still swallows input, so
+  the whole 200x200 canvas blocked the desktop.
+- **Popup placement.** The context menu was built as `QMenu()` with no parent. On
+  Wayland an unparented popup becomes its own top-level surface, and clients cannot
+  position top-level surfaces, so the compositor placed it in a corner.
+- **Dragging.** `QWidget.move()` cannot work on Wayland at all; clients are not
+  permitted to position their own surfaces.
+- **Clipping.** The canvas was fixed at 200x200 while the largest scaled sprite is
+  308x234, so the biggest Pokemon were cut off.
+
+Fixes in `src/ui_manager.py` and `src/main.py`:
+
+- The window is masked down to the sprite plus a 10px grab margin, so only the pet is
+  clickable and the rest of the canvas passes clicks to the desktop. The mask is
+  refreshed whenever the sprite changes.
+- The canvas is a fixed 340x280, large enough for the biggest sprite, with the sprite
+  centred so the pet does not jump when a larger or smaller species appears.
+- The context menu is parented to the sprite label, and its construction moved to
+  `UIManager.build_context_menu()` so it can be tested without a modal loop.
+- Dragging asks the compositor via `QWindow.startSystemMove()`, falling back to the
+  manual `move()` path on platforms that do not implement it.
+- The tray menu is retained on the window; `setContextMenu()` does not take ownership,
+  so the previous local menu could be garbage collected.
+
+Verification: `tests/test_borderless_mode.py` pins the mask geometry, the click-through
+corners, the centring, and the menu parent, and scans all 1,298 bundled GIFs to assert
+the canvas fits every sprite. Compositor-level behaviour (mask application,
+`startSystemMove`, popup anchoring) cannot be exercised headlessly and still needs
+confirmation on a real KDE Plasma session.
+
 ## Must Fix Before Production
 
 ### 1. Stop writing user save data and mutable config into the app install directory by default

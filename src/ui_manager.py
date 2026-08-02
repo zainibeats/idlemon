@@ -1,8 +1,8 @@
 """UI management module for Qt interface"""
 from pathlib import Path
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
-from PySide6.QtCore import Qt, QSize, Signal
-from PySide6.QtGui import QPixmap, QMovie
+from PySide6.QtCore import Qt, QPoint, QRect, QSize, Signal
+from PySide6.QtGui import QPixmap, QMovie, QRegion
 from ui_colors import UIColors
 from ui_styles import button_style, transparent_label_style
 from utils import find_pokemon_gif
@@ -10,9 +10,15 @@ from utils import find_pokemon_gif
 # UI Constants
 GIF_SCALE_FACTOR = 1.5
 GIF_ANIMATION_SPEED = 100
-BORDERLESS_WINDOW_SIZE = 200
 STATS_PANEL_WIDTH = 230
 BACKGROUND_HEIGHT = 500
+
+# Borderless desktop pet mode. The canvas is fixed and large enough for the biggest
+# scaled sprite (308x234) so no Pokemon is clipped, and the sprite is centred in it so
+# the pet does not jump when a larger or smaller species appears. Only the sprite plus
+# a small grab margin is unmasked, so the rest of the canvas stays click-through.
+BORDERLESS_CANVAS_SIZE = QSize(340, 280)
+BORDERLESS_GRAB_PADDING = 10
 
 
 class ClickableLabel(QLabel):
@@ -69,8 +75,9 @@ class UIManager:
             # Create Pokemon display area
             self._create_pokemon_display()
 
-            # Set default window size for borderless mode
-            self.window.resize(BORDERLESS_WINDOW_SIZE, BORDERLESS_WINDOW_SIZE)
+            # A fixed canvas keeps the sprite's centre stable across species changes.
+            self.window.setFixedSize(BORDERLESS_CANVAS_SIZE)
+            self._update_borderless_grab_region(QSize(0, 0))
         else:
             # Normal mode: background image with stats
             # Load and scale background
@@ -183,7 +190,9 @@ class UIManager:
             self.pokemon_label.customContextMenuRequested.connect(self._show_context_menu)
 
         self.foreground_layout.addWidget(self.pokemon_label, alignment=Qt.AlignCenter)
-        self.foreground_layout.addStretch()
+        if not self.borderless_mode:
+            # Borderless mode shows only the sprite, so it stays centred in the canvas.
+            self.foreground_layout.addStretch()
 
     def _create_continue_button(self):
         """Create the continue hunt button"""
@@ -233,6 +242,32 @@ class UIManager:
 
         self.pokemon_movie.start()
 
+        if self.borderless_mode:
+            self._update_borderless_grab_region(self.pokemon_movie.scaledSize())
+
+    def _update_borderless_grab_region(self, sprite_size):
+        """
+        Restrict the window to the sprite plus a small grab margin.
+
+        A translucent window is only click-through on Windows, where transparent
+        pixels of a layered window pass clicks to the desktop. On X11 and Wayland
+        transparency is purely visual and the whole window rectangle still swallows
+        input, so the canvas has to be masked down to the sprite explicitly.
+        """
+        if sprite_size.isEmpty():
+            # No sprite yet, so nothing should be grabbable.
+            self.window.setMask(QRegion())
+            return
+
+        grab_rect = QRect(QPoint(0, 0), sprite_size + QSize(
+            2 * BORDERLESS_GRAB_PADDING,
+            2 * BORDERLESS_GRAB_PADDING,
+        ))
+        grab_rect.moveCenter(QRect(QPoint(0, 0), BORDERLESS_CANVAS_SIZE).center())
+
+        self.pokemon_label.setFixedSize(sprite_size)
+        self.window.setMask(QRegion(grab_rect))
+
     def update_encounter_display(self, pokemon_name, rarity, is_shiny):
         """Update the encounter info display"""
         self.display_pokemon_gif(pokemon_name, is_shiny)
@@ -276,34 +311,37 @@ class UIManager:
         if not self.borderless_mode:
             self.continue_button.hide()
 
+    def build_context_menu(self):
+        """
+        Build the borderless-mode context menu.
+
+        The menu is parented to the sprite label on purpose. An unparented popup
+        becomes its own top-level surface on Wayland, and clients cannot position
+        top-level surfaces, so the compositor drops it in a screen corner.
+        """
+        menu = QMenu(self.pokemon_label)
+
+        # Add continue hunt option if shiny is paused
+        if getattr(self.window, 'shiny_paused', False):
+            menu.addAction("Continue Hunt").triggered.connect(self.window.continue_hunt)
+            menu.addSeparator()
+
+        menu.addAction("View Collection").triggered.connect(self.window.open_collection_window)
+        menu.addAction("⚙ Settings").triggered.connect(self.window.open_settings)
+
+        # Always add exit option
+        menu.addSeparator()
+        menu.addAction("Exit IdleMon").triggered.connect(self.window.close)
+
+        return menu
+
     def _show_context_menu(self, position):
         """Show context menu for borderless mode"""
         if not self.borderless_mode:
             return
 
-        menu = QMenu()
-
-        # Add continue hunt option if shiny is paused
-        if hasattr(self.window, 'shiny_paused') and self.window.shiny_paused:
-            continue_action = menu.addAction("Continue Hunt")
-            continue_action.triggered.connect(self.window.continue_hunt)
-            menu.addSeparator()
-
-        # Add collection window option
-        collection_action = menu.addAction("View Collection")
-        collection_action.triggered.connect(self.window.open_collection_window)
-
-        # Add settings option
-        settings_action = menu.addAction("⚙ Settings")
-        settings_action.triggered.connect(self.window.open_settings)
-
-        # Always add exit option
-        menu.addSeparator()
-        exit_action = menu.addAction("Exit IdleMon")
-        exit_action.triggered.connect(self.window.close)
-
         # Show menu at cursor position
-        menu.exec(self.pokemon_label.mapToGlobal(position))
+        self.build_context_menu().exec(self.pokemon_label.mapToGlobal(position))
 
     def enable_shiny_label_click(self, callback):
         """

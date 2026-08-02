@@ -82,10 +82,12 @@ class IdleMonWindow(QMainWindow):
     def _create_tray_icon(self):
         """Create system tray icon for borderless mode"""
         self.tray_icon = QSystemTrayIcon(self)
-        tray_menu = QMenu()
-        exit_action = tray_menu.addAction("Exit IdleMon")
+        # Kept on the window: setContextMenu() does not take ownership, so a local
+        # menu can be garbage collected and leave the tray icon without a menu.
+        self.tray_menu = QMenu(self)
+        exit_action = self.tray_menu.addAction("Exit IdleMon")
         exit_action.triggered.connect(self.close)
-        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_icon.setToolTip("IdleMon - Pokemon Desktop Pet")
         self.tray_icon.show()
 
@@ -154,9 +156,18 @@ class IdleMonWindow(QMainWindow):
             self.config['mute_audio'] = new_config['mute_audio']
 
     def mousePressEvent(self, event):
-        if self.borderless_mode and event.button() == Qt.LeftButton:
+        if not self.borderless_mode or event.button() != Qt.LeftButton:
+            return
+
+        # Ask the compositor to move the window. Wayland clients cannot position
+        # their own surfaces, so the manual move() below never works there; it stays
+        # as a fallback for platforms that do not implement startSystemMove().
+        handle = self.windowHandle()
+        if handle is not None and handle.startSystemMove():
+            self.drag_position = None
+        else:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            event.accept()
+        event.accept()
 
     def mouseMoveEvent(self, event):
         if self.borderless_mode and event.buttons() == Qt.LeftButton and self.drag_position:
