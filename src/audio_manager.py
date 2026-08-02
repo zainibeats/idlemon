@@ -1,23 +1,23 @@
 """Audio management module for sound effects"""
-from pathlib import Path
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QSoundEffect
 import paths
+
+SHINY_SOUND_FILE = "shiny_sound1.wav"
+CONTINUE_SOUND_FILE = "continue_sound1.wav"
 
 
 class AudioManager:
     """Manages game sound effects"""
 
-    def __init__(self, project_root, mute_audio, logger):
+    def __init__(self, mute_audio, logger):
         """
         Initialize audio manager
 
         Args:
-            project_root: Base path for assets
             mute_audio: Whether audio is muted
             logger: LogManager instance
         """
-        self.project_root = Path(project_root)
         self.mute_audio = mute_audio
         self.logger = logger
         self.shiny_sound = None
@@ -26,25 +26,24 @@ class AudioManager:
         if not mute_audio:
             self._load_sounds()
 
-    def _load_sounds(self):
-        """Load sound effects from assets"""
-        # Load shiny sound
-        shiny_sound_path = paths.asset_path("sounds", "shiny_sound1.wav", root=self.project_root)
-        if shiny_sound_path.exists():
-            self.shiny_sound = QSoundEffect()
-            self.shiny_sound.setSource(QUrl.fromLocalFile(str(shiny_sound_path)))
-            self.shiny_sound.setVolume(1.0)
-        else:
-            self.logger.log_error(f"Shiny sound file not found: {shiny_sound_path}")
+    def _load_sound(self, file_name):
+        """Load a single sound effect, or return None when the asset is missing."""
+        sound_path = paths.asset_path("sounds", file_name)
+        if not sound_path.exists():
+            self.logger.log_error(f"Sound file not found: {sound_path}")
+            return None
 
-        # Load continue sound
-        continue_sound_path = paths.asset_path("sounds", "continue_sound1.wav", root=self.project_root)
-        if continue_sound_path.exists():
-            self.continue_sound = QSoundEffect()
-            self.continue_sound.setSource(QUrl.fromLocalFile(str(continue_sound_path)))
-            self.continue_sound.setVolume(1.0)
-        else:
-            self.logger.log_error(f"Continue sound file not found: {continue_sound_path}")
+        effect = QSoundEffect()
+        effect.setSource(QUrl.fromLocalFile(str(sound_path)))
+        effect.setVolume(1.0)
+        return effect
+
+    def _load_sounds(self):
+        """Load any sound effects that are not loaded yet."""
+        if self.shiny_sound is None:
+            self.shiny_sound = self._load_sound(SHINY_SOUND_FILE)
+        if self.continue_sound is None:
+            self.continue_sound = self._load_sound(CONTINUE_SOUND_FILE)
 
     def play_shiny_sound(self):
         """Play shiny encounter sound"""
@@ -64,6 +63,5 @@ class AudioManager:
             mute: Boolean indicating whether to mute audio
         """
         self.mute_audio = mute
-        # Load sounds if unmuting and sounds aren't loaded
-        if not mute and (self.shiny_sound is None or self.continue_sound is None):
+        if not mute:
             self._load_sounds()

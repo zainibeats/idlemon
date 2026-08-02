@@ -1,7 +1,7 @@
 """UI management module for Qt interface"""
 from pathlib import Path
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget, QMenu
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QPixmap, QMovie
 from ui_colors import UIColors
 from ui_styles import button_style, transparent_label_style
@@ -28,19 +28,17 @@ class ClickableLabel(QLabel):
 class UIManager:
     """Manages the Qt user interface components"""
 
-    def __init__(self, main_window, project_root, background_path, borderless_mode=False, logger=None):
+    def __init__(self, main_window, background_path, borderless_mode=False, logger=None):
         """
         Initialize UI manager
 
         Args:
             main_window: The main QMainWindow instance
-            project_root: Base path for assets
             background_path: Path to background image
             borderless_mode: Whether to use borderless transparent mode
             logger: Optional LogManager instance
         """
         self.window = main_window
-        self.project_root = Path(project_root)
         self.background_path = Path(background_path)
         self.borderless_mode = borderless_mode
         self.logger = logger
@@ -51,6 +49,7 @@ class UIManager:
         self.shiny_label = None
         self.stats_label = None
         self.pokemon_label = None
+        self.pokemon_movie = None
         self.continue_button = None
         self.settings_button = None
         self.foreground_layout = None
@@ -72,8 +71,6 @@ class UIManager:
 
             # Set default window size for borderless mode
             self.window.resize(BORDERLESS_WINDOW_SIZE, BORDERLESS_WINDOW_SIZE)
-
-            return BORDERLESS_WINDOW_SIZE, BORDERLESS_WINDOW_SIZE
         else:
             # Normal mode: background image with stats
             # Load and scale background
@@ -101,8 +98,6 @@ class UIManager:
 
             # Set window size based on background
             self.window.setFixedSize(background_pixmap.width(), background_pixmap.height())
-
-            return background_pixmap.width(), background_pixmap.height()
 
     def _create_stats_panel(self):
         """Create the stats display panel"""
@@ -175,6 +170,13 @@ class UIManager:
         self.pokemon_label.setAlignment(Qt.AlignCenter)
         self.pokemon_label.setStyleSheet("background: transparent;")
 
+        # A single QMovie is reused for every encounter. QLabel.setMovie() keeps a
+        # reference to each movie it is handed, so building one per encounter would
+        # hold every GIF file open until the app runs out of file descriptors.
+        self.pokemon_movie = QMovie(self.pokemon_label)
+        self.pokemon_movie.setSpeed(GIF_ANIMATION_SPEED)
+        self.pokemon_label.setMovie(self.pokemon_movie)
+
         # Enable context menu for borderless mode
         if self.borderless_mode:
             self.pokemon_label.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -212,20 +214,24 @@ class UIManager:
             pokemon_name: Name of Pokemon
             is_shiny: Whether to show shiny version
         """
-        gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny)
+        gif_path = find_pokemon_gif(pokemon_name, is_shiny)
 
         if not gif_path:
             if self.logger is not None:
                 self.logger.log_error(f"GIF file not found for {pokemon_name}")
             return
 
-        # Create and setup QMovie
-        movie = QMovie(str(gif_path))
-        movie.setScaledSize(movie.scaledSize() * GIF_SCALE_FACTOR)
-        movie.setSpeed(GIF_ANIMATION_SPEED)
+        self.pokemon_movie.stop()
+        # Clear any previous scaling so the new GIF's native frame size can be read.
+        self.pokemon_movie.setScaledSize(QSize())
+        self.pokemon_movie.setFileName(str(gif_path))
+        self.pokemon_movie.jumpToFrame(0)
 
-        self.pokemon_label.setMovie(movie)
-        movie.start()
+        native_size = self.pokemon_movie.currentPixmap().size()
+        if not native_size.isEmpty():
+            self.pokemon_movie.setScaledSize(native_size * GIF_SCALE_FACTOR)
+
+        self.pokemon_movie.start()
 
     def update_encounter_display(self, pokemon_name, rarity, is_shiny):
         """Update the encounter info display"""
@@ -294,14 +300,10 @@ class UIManager:
         # Always add exit option
         menu.addSeparator()
         exit_action = menu.addAction("Exit IdleMon")
-        exit_action.triggered.connect(self._exit_application)
+        exit_action.triggered.connect(self.window.close)
 
         # Show menu at cursor position
         menu.exec(self.pokemon_label.mapToGlobal(position))
-
-    def _exit_application(self):
-        """Properly exit the application"""
-        self.window.close()
 
     def enable_shiny_label_click(self, callback):
         """

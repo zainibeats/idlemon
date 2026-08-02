@@ -7,8 +7,6 @@ class UIColors:
     """
     # Primary colors - Bold and saturated
     PRIMARY_BLUE = "#2196F3"      # Bright blue
-    PRIMARY_RED = "#F44336"       # Vibrant red
-    PRIMARY_YELLOW = "#FFC107"    # Bright yellow/gold
 
     # Background colors
     BG_DARK = "rgba(30, 30, 40, 200)"       # Deep dark blue-gray
@@ -22,7 +20,6 @@ class UIColors:
     TEXT_SHINY = "#FFD700"        # Bright gold for shiny Pokemon
 
     # Accent colors
-    ACCENT_SUCCESS = "#4CAF50"    # Vibrant green
     ACCENT_HOVER = "#66BB6A"      # Lighter green for hover
     ACCENT_PRESSED = "#388E3C"    # Darker green for pressed
 
@@ -40,11 +37,10 @@ class UIColors:
     BUTTON_PRIMARY = "#4CAF50"    # Vibrant green for primary actions
     BUTTON_SECONDARY = "#2196F3"  # Bright blue for secondary actions
     BUTTON_CANCEL = "#757575"     # Gray for cancel/neutral
-    BUTTON_DANGER = "#F44336"     # Bright red for destructive actions
 
     # Count badge
-    BADGE_BG = "#66BB6A"          # Lighter green red badge
+    BADGE_BG = "#66BB6A"          # Lighter green for duplicate count badges
 
     # Group box borders (for settings)
-    GROUP_DISPLAY = "#8B7BA8"     # Vibrant purple for display settings
-    GROUP_VISUAL = "#FFD700"      # Bright orange for visual settings
+    GROUP_DISPLAY = "#8B7BA8"     # Muted purple for display settings
+    GROUP_VISUAL = "#FFD700"      # Gold for visual settings

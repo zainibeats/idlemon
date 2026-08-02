@@ -60,7 +60,7 @@ Example:
 IdleMon stores runtime data in `config/`:
 
 - `save_data.json`: shiny count and shiny collection history
-- `logs/error.log`: runtime errors
+- `logs/error.log`: runtime errors, rotated at 1 MB with 3 backups
 
 Delete `config/save_data.json` to reset progress.
 

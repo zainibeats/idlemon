@@ -43,7 +43,7 @@ class IdleMonWindow(QMainWindow):
 
         # Initialize managers
         self.game = GameController(config, data_manager, self.logger)
-        self.audio = AudioManager(paths.PROJECT_ROOT, config["mute_audio"], self.logger)
+        self.audio = AudioManager(config["mute_audio"], self.logger)
 
         # Setup background path
         requested_background_path = paths.resolve_asset_path(config["background_image"])
@@ -56,7 +56,6 @@ class IdleMonWindow(QMainWindow):
         # Initialize UI
         self.ui = UIManager(
             self,
-            paths.PROJECT_ROOT,
             background_path,
             self.borderless_mode,
             self.logger,
@@ -131,19 +130,22 @@ class IdleMonWindow(QMainWindow):
 
     def open_settings(self):
         """Open settings dialog"""
-        config_file_path = paths.get_config_file()
-        dialog = SettingsDialog(self.config, str(config_file_path), paths.PROJECT_ROOT, self)
+        dialog = SettingsDialog(self.config, self)
         dialog.settings_changed.connect(self.on_settings_changed)
         dialog.exec()
 
     def open_collection_window(self):
         """Open or bring to front the shiny collection window"""
-        if self.collection_window and self.collection_window.isVisible():
-            self.collection_window.raise_()
-            self.collection_window.activateWindow()
-        else:
-            self.collection_window = CollectionWindow(self.data_manager, paths.PROJECT_ROOT, self)
-            self.collection_window.show()
+        # The window is reused: it stays parented to this window once created, so
+        # building a new one per open would keep every previous window alive.
+        if self.collection_window is None:
+            self.collection_window = CollectionWindow(self.data_manager, self)
+        elif not self.collection_window.isVisible():
+            self.collection_window.load_collection_data()
+
+        self.collection_window.show()
+        self.collection_window.raise_()
+        self.collection_window.activateWindow()
 
     def on_settings_changed(self, new_config):
         """Handle settings changes that don't require restart"""

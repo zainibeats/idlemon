@@ -101,10 +101,6 @@ class DataManager:
         """Get all recorded shiny encounters."""
         return self._load_save_data()["shinies"].copy()
 
-    def save_path(self):
-        """Return the current save data file path."""
-        return self.save_data_file
-
     def load_pokemon_data(self):
         """Load and cache Pokemon data from all generation files"""
         if self.pokemon_data_cache is not None:

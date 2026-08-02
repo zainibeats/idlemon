@@ -10,6 +10,41 @@ IdleMon is closer to production-ready after the first fixes. The timer lifecycle
 
 The remaining production risks are mostly around config validation, path ownership, and production diagnostics.
 
+## Resolved: GIF file handle exhaustion (crash after long runs)
+
+Review date: 2026-08-02
+
+Reported symptom: after running for a while the app crashed with "too many open files".
+
+Root cause: `QLabel.setMovie()` keeps a reference to every `QMovie` it is handed, and a
+`QMovie` holds its GIF file open for its entire lifetime. Neither `movie.stop()` nor
+`label.setMovie(None)` releases the earlier movie, so every movie ever displayed stayed
+alive with its file descriptor open.
+
+Two paths leaked:
+
+- `src/ui_manager.py` built a new `QMovie` per encounter. Measured at exactly **one
+  leaked descriptor per encounter**: at the default 2.5s `encounter_delay` that is
+  ~1,440 per hour, so a 1024 descriptor soft limit is exhausted in roughly 40 minutes.
+- `src/collection_window.py` gave every collection tile its own `QMovie`, and
+  `resizeEvent` rebuilt the whole grid on every resize event. Each rebuild opened one
+  descriptor per collected shiny and released none, so dragging the window edge could
+  burn through the limit in seconds.
+
+Fixes:
+
+- `UIManager` creates one `QMovie` up front and swaps GIFs with `setFileName()`.
+- `CollectionWindow` owns a single shared hover `QMovie`; tiles hold only a cached
+  still frame `QPixmap`, so the grid costs no descriptors at rest.
+- `resizeEvent` rebuilds only when the computed column count actually changes.
+- `IdleMonWindow.open_collection_window()` reuses its collection window instead of
+  constructing a new parented one per open, which leaked the entire previous window.
+
+Verification: `tests/test_gif_file_handles.py` asserts open GIF descriptors stay at
+most one across repeated encounters, grid rebuilds, and hovering every tile. A soak
+run of the real window covered 4,129 encounters (~2.9 hours at the default delay) plus
+six collection open/rebuild/hover/close cycles with a flat descriptor count.
+
 ## Must Fix Before Production
 
 ### 1. Stop writing user save data and mutable config into the app install directory by default
@@ -127,3 +162,7 @@ This is optional, but it aligns with common Python packaging conventions.
 - [x] Make logger setup idempotent.
 - [x] Deduplicate the most repeated UI styles.
 - [x] Split runtime and development requirements if packaging polish is in scope.
+- [x] Fix the GIF file handle leaks that crashed long runs.
+- [x] Bound `error.log` growth with a rotating handler.
+- [x] Finish removing the threaded `project_root` argument now that `paths` owns it.
+- [x] Prune remaining dead code and unused imports.

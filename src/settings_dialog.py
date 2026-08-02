@@ -5,9 +5,16 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QCheckBox, QFileDialog, QLineEdit, QGroupBox, QMessageBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
+import paths
 from ui_colors import UIColors
 from ui_styles import button_style, group_box_style
+
+# User-facing settings that only take effect after a restart.
+RESTART_REQUIRED_SETTINGS = (
+    ("borderless_mode", "Borderless mode"),
+    ("background_image", "Background image"),
+)
 
 
 class SettingsDialog(QDialog):
@@ -15,20 +22,17 @@ class SettingsDialog(QDialog):
 
     settings_changed = Signal(dict)  # Emits new config when saved
 
-    def __init__(self, current_config, config_file_path, project_root, parent=None):
+    def __init__(self, current_config, parent=None):
         """
         Initialize settings dialog
 
         Args:
             current_config: Current configuration dict
-            config_file_path: Path to persisted settings file
-            project_root: Project root path for resolving relative paths
             parent: Parent widget
         """
         super().__init__(parent)
         self.current_config = current_config
-        self.config_file_path = Path(config_file_path)
-        self.project_root = Path(project_root)
+        self.config_file_path = paths.get_config_file()
         self.setWindowTitle("IdleMon Settings")
         self.setModal(True)
         self.setMinimumWidth(500)
@@ -79,8 +83,6 @@ class SettingsDialog(QDialog):
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
         layout.addLayout(button_layout)
-
-
 
     def _create_display_group(self):
         """Create display settings group"""
@@ -145,7 +147,7 @@ class SettingsDialog(QDialog):
             bg_path_obj = Path(bg_path)
             if bg_path_obj.is_absolute():
                 try:
-                    bg_path = str(bg_path_obj.relative_to(self.project_root))
+                    bg_path = str(bg_path_obj.relative_to(paths.PROJECT_ROOT))
                 except ValueError:
                     pass
         self.inputs['background_image'].setText(bg_path)
@@ -163,7 +165,7 @@ class SettingsDialog(QDialog):
             # Try to make path relative to project root
             file_path_obj = Path(file_path)
             try:
-                relative_path = str(file_path_obj.relative_to(self.project_root))
+                relative_path = str(file_path_obj.relative_to(paths.PROJECT_ROOT))
                 self.inputs['background_image'].setText(relative_path)
             except ValueError:
                 self.inputs['background_image'].setText(file_path)
@@ -178,10 +180,10 @@ class SettingsDialog(QDialog):
         }
         new_config = {**self.current_config, **updated_settings}
 
-        # Check if borderless mode changed
-        borderless_changed = (
-            updated_settings['borderless_mode'] != self.current_config.get('borderless_mode', False)
-        )
+        changed_restart_settings = [
+            label for key, label in RESTART_REQUIRED_SETTINGS
+            if updated_settings[key] != self.current_config.get(key)
+        ]
 
         # Save only user-facing settings to the portable config file.
         try:
@@ -192,11 +194,14 @@ class SettingsDialog(QDialog):
             )
 
             # Show restart message if needed
-            if borderless_changed:
+            if changed_restart_settings:
+                changed_list = "\n".join(f" - {label}" for label in changed_restart_settings)
                 QMessageBox.information(
                     self,
                     "Restart Required",
-                    "Borderless mode setting has changed.\nPlease restart IdleMon for changes to take effect."
+                    "These settings changed:\n"
+                    f"{changed_list}\n\n"
+                    "Please restart IdleMon for them to take effect."
                 )
 
             # Emit signal with new config

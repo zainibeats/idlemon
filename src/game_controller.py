@@ -3,9 +3,6 @@ import random
 import time
 from PySide6.QtCore import QObject, QTimer, Signal
 
-# Game constants
-NEARBY_SHINY_HINT_DIVISOR = 5  # 1 in (shiny_rate // 5) chance to show nearby hint
-
 
 class GameSignals(QObject):
     """Signals for UI updates"""
@@ -77,15 +74,7 @@ class GameController:
         Returns:
             bool: True if shiny encounter
         """
-        if random.randint(1, self.shiny_rate) == 1:
-            return True
-
-        # Easter egg: occasionally record that a shiny is nearby.
-        hint_rate = max(1, self.shiny_rate // NEARBY_SHINY_HINT_DIVISOR)
-        if random.randint(1, hint_rate) == 1:
-            self.logger.log_info("You hear a shiny Pokemon nearby...")
-
-        return False
+        return random.randint(1, self.shiny_rate) == 1
 
     def start_timer(self):
         """Start the elapsed time timer"""

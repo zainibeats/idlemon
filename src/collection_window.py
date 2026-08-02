@@ -22,17 +22,58 @@ MAX_COLUMNS = 8
 DEFAULT_COLUMNS = 4
 GIF_ANIMATION_SPEED = 100
 
+RARITY_ORDER = {
+    'Very Rare': 0,
+    'Rare': 1,
+    'Semi-rare': 2,
+    'Common': 3,
+    'Very Common': 4,
+}
+
+
+def _fit_size(size):
+    """Scale a frame size to the tile size while keeping its aspect ratio."""
+    scale = min(GIF_DISPLAY_SIZE / size.width(), GIF_DISPLAY_SIZE / size.height())
+    return QSize(int(size.width() * scale), int(size.height() * scale))
+
+
+def _load_first_frame(gif_path):
+    """
+    Return a GIF's first frame scaled to the tile, or None when unavailable.
+
+    The QMovie is local so its file handle is released once the frame is copied.
+    """
+    if not gif_path or not Path(gif_path).exists():
+        return None
+
+    movie = QMovie(str(gif_path))
+    movie.jumpToFrame(0)
+    frame = movie.currentPixmap()
+    if frame.isNull():
+        return None
+
+    return frame.scaled(_fit_size(frame.size()), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
 
 class CollectionItemWidget(QWidget):
     """Widget representing a single shiny Pokemon in the collection"""
 
-    def __init__(self, pokemon_name, rarity, count, gif_path, parent=None):
+    def __init__(self, shiny, static_frame, collection, parent=None):
+        """
+        Args:
+            shiny: Dict with name, rarity, count, and gif_path keys
+            static_frame: Pre-rendered first frame QPixmap, or None when missing
+            collection: Owning CollectionWindow, which drives hover animation
+            parent: Parent widget
+        """
         super().__init__(parent)
-        self.pokemon_name = pokemon_name
-        self.rarity = rarity
-        self.count = count
-        self.gif_path = gif_path
-        self.movie = None  # Store movie reference for hover control
+        self.pokemon_name = shiny['name']
+        self.rarity = shiny['rarity']
+        self.count = shiny['count']
+        self.gif_path = shiny['gif_path']
+        self.static_frame = static_frame
+        self.collection = collection
+        self.gif_label = None
 
         self.setup_ui()
         # Enable mouse tracking for hover events
@@ -58,30 +99,14 @@ class CollectionItemWidget(QWidget):
         container_layout.setContentsMargins(8, 8, 8, 8)
         container_layout.setSpacing(5)
 
-        # Pokemon GIF
+        # Pokemon GIF, shown as a still frame until the item is hovered
         self.gif_label = QLabel()
         self.gif_label.setAlignment(Qt.AlignCenter)
         self.gif_label.setFixedSize(GIF_SIZE, GIF_SIZE)
         self.gif_label.setStyleSheet("background: transparent; border: none;")
 
-        # Load GIF but don't animate until hover
-        if self.gif_path and Path(self.gif_path).exists():
-            self.movie = QMovie(str(self.gif_path))
-            # Scale the movie to fit nicely
-            original_size = self.movie.scaledSize()
-            if original_size.width() > 0 and original_size.height() > 0:
-                scale_factor = min(GIF_DISPLAY_SIZE / original_size.width(), GIF_DISPLAY_SIZE / original_size.height())
-                new_size = QSize(
-                    int(original_size.width() * scale_factor),
-                    int(original_size.height() * scale_factor)
-                )
-                self.movie.setScaledSize(new_size)
-            self.movie.setSpeed(GIF_ANIMATION_SPEED)
-
-            # Show first frame as static image (don't animate until hover)
-            self.movie.jumpToFrame(0)
-            first_frame = self.movie.currentPixmap()
-            self.gif_label.setPixmap(first_frame)
+        if self.static_frame is not None:
+            self.gif_label.setPixmap(self.static_frame)
         else:
             # Fallback if GIF not found
             self.gif_label.setText("?")
@@ -143,33 +168,42 @@ class CollectionItemWidget(QWidget):
         layout.addWidget(container)
         self.setFixedSize(ITEM_WIDTH, ITEM_HEIGHT)
 
+    def show_static_frame(self):
+        """Return the tile to its non-animated first frame."""
+        if self.static_frame is not None:
+            self.gif_label.setPixmap(self.static_frame)
+
     def enterEvent(self, event):
         """Start GIF animation when mouse enters the widget"""
-        if self.movie:
-            self.gif_label.setMovie(self.movie)
-            self.movie.start()
+        self.collection.start_hover(self)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         """Stop GIF animation and return to first frame when mouse leaves"""
-        if self.movie:
-            self.movie.stop()
-            self.movie.jumpToFrame(0)
-            first_frame = self.movie.currentPixmap()
-            self.gif_label.setPixmap(first_frame)
+        self.collection.stop_hover(self)
         super().leaveEvent(event)
 
 
 class CollectionWindow(QDialog):
     """Window displaying the shiny Pokemon collection"""
 
-    def __init__(self, data_manager, project_root, parent=None):
+    def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self.data_manager = data_manager
-        self.project_root = Path(project_root)
         self.shiny_data = []
         self.filtered_data = []
         self.scroll_area = None  # Store reference for width calculation
+        self.current_columns = 0
+
+        # Still frames are cached so rebuilding the grid does not re-decode GIFs.
+        self.static_frames = {}
+
+        # One shared QMovie animates whichever tile is hovered. QLabel.setMovie()
+        # retains every movie it is given, so a movie per tile would keep one file
+        # handle open per collected shiny.
+        self.hover_movie = QMovie(self)
+        self.hover_movie.setSpeed(GIF_ANIMATION_SPEED)
+        self.hovered_item = None
 
         self.setWindowTitle("Shiny Pokémon Collection")
         self.setModal(False)
@@ -282,14 +316,13 @@ class CollectionWindow(QDialog):
 
         self.shiny_data = []
         for pokemon_name, data in all_shinies.items():
-            # Find the GIF path
-            gif_path = self.find_shiny_gif(pokemon_name)
+            gif_path = find_pokemon_gif(pokemon_name, is_shiny=True)
 
             self.shiny_data.append({
                 'name': pokemon_name,
                 'rarity': data['rarity'],
                 'count': data['count'],
-                'gif_path': gif_path
+                'gif_path': str(gif_path) if gif_path else None
             })
 
         # Initial sort by name
@@ -297,11 +330,6 @@ class CollectionWindow(QDialog):
         self.filtered_data = self.shiny_data.copy()
 
         self.update_collection_display()
-
-    def find_shiny_gif(self, pokemon_name):
-        """Find the shiny GIF path for a Pokemon"""
-        gif_path = find_pokemon_gif(self.project_root, pokemon_name, is_shiny=True)
-        return str(gif_path) if gif_path else None
 
     def calculate_columns(self):
         """Calculate optimal number of columns based on available width"""
@@ -314,17 +342,56 @@ class CollectionWindow(QDialog):
         # Each item includes width + spacing
         total_item_width = ITEM_WIDTH + GRID_SPACING
 
-        # Calculate how many fit within min/max bounds
-        columns = max(MIN_COLUMNS, min(int(available_width / total_item_width), MAX_COLUMNS))
+        return max(MIN_COLUMNS, min(int(available_width / total_item_width), MAX_COLUMNS))
 
-        # Fallback to default if calculation fails
-        if columns < MIN_COLUMNS:
-            columns = DEFAULT_COLUMNS
+    def start_hover(self, item):
+        """Animate a hovered tile using the shared movie."""
+        if item.static_frame is None:
+            return
 
-        return columns
+        self.stop_hover()
+
+        self.hover_movie.stop()
+        # Clear previous scaling so the new GIF's native frame size can be read.
+        self.hover_movie.setScaledSize(QSize())
+        self.hover_movie.setFileName(item.gif_path)
+        self.hover_movie.jumpToFrame(0)
+
+        native_size = self.hover_movie.currentPixmap().size()
+        if not native_size.isEmpty():
+            self.hover_movie.setScaledSize(_fit_size(native_size))
+
+        item.gif_label.setMovie(self.hover_movie)
+        self.hover_movie.start()
+        self.hovered_item = item
+
+    def stop_hover(self, item=None):
+        """
+        Stop the shared animation and restore the still frame.
+
+        Leave events can arrive after the next tile's enter event, so a leave from
+        a tile that is no longer the hovered one is ignored.
+        """
+        if self.hovered_item is None or (item is not None and item is not self.hovered_item):
+            return
+
+        self.hover_movie.stop()
+        self.hovered_item.gif_label.setMovie(None)
+        self.hovered_item.show_static_frame()
+        self.hovered_item = None
+
+    def _static_frame(self, shiny):
+        """Return the cached tile-sized first frame for a shiny."""
+        name = shiny['name']
+        if name not in self.static_frames:
+            self.static_frames[name] = _load_first_frame(shiny['gif_path'])
+        return self.static_frames[name]
 
     def update_collection_display(self):
         """Update the collection grid display"""
+        # Tiles are about to be destroyed, so drop any hover state pointing at them.
+        self.stop_hover()
+
         # Clear existing items
         while self.collection_layout.count():
             item = self.collection_layout.takeAt(0)
@@ -338,6 +405,7 @@ class CollectionWindow(QDialog):
 
         # Display empty state if no shinies
         if not self.filtered_data:
+            self.current_columns = 0
             empty_label = QLabel("No shiny Pokémon found yet.\nKeep hunting!" if not self.shiny_data
                                  else "No matching Pokémon found.")
             empty_label.setStyleSheet(
@@ -353,18 +421,15 @@ class CollectionWindow(QDialog):
             return
 
         # Add collection items to grid with dynamic columns
-        columns = self.calculate_columns()
+        self.current_columns = self.calculate_columns()
         for index, shiny in enumerate(self.filtered_data):
-            row = index // columns
-            col = index % columns
-
-            item_widget = CollectionItemWidget(
-                shiny['name'],
-                shiny['rarity'],
-                shiny['count'],
-                shiny['gif_path']
+            item_widget = CollectionItemWidget(shiny, self._static_frame(shiny), self)
+            self.collection_layout.addWidget(
+                item_widget,
+                index // self.current_columns,
+                index % self.current_columns,
+                alignment=Qt.AlignCenter,
             )
-            self.collection_layout.addWidget(item_widget, row, col, alignment=Qt.AlignCenter)
 
     def filter_collection(self):
         """Filter collection based on search text"""
@@ -387,14 +452,7 @@ class CollectionWindow(QDialog):
         if sort_index == 0:  # Sort by Name
             self.shiny_data.sort(key=lambda x: x['name'])
         elif sort_index == 1:  # Sort by Rarity
-            rarity_order = {
-                'Very Rare': 0,
-                'Rare': 1,
-                'Semi-rare': 2,
-                'Common': 3,
-                'Very Common': 4
-            }
-            self.shiny_data.sort(key=lambda x: rarity_order.get(x['rarity'], 99))
+            self.shiny_data.sort(key=lambda x: RARITY_ORDER.get(x['rarity'], 99))
         elif sort_index == 2:  # Sort by Count
             self.shiny_data.sort(key=lambda x: x['count'], reverse=True)
 
@@ -402,8 +460,7 @@ class CollectionWindow(QDialog):
         self.filter_collection()
 
     def resizeEvent(self, event):
-        """Handle window resize to recalculate grid layout"""
+        """Rebuild the grid only when the column count actually changes"""
         super().resizeEvent(event)
-        # Only update if we have data to display
-        if self.filtered_data:
+        if self.filtered_data and self.calculate_columns() != self.current_columns:
             self.update_collection_display()

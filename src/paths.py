@@ -6,6 +6,9 @@ from pathlib import Path
 CONFIG_DIR_NAME = "config"
 CONFIG_FILE_NAME = "config.json"
 
+# Pokemon generations bundled under assets/data and assets/gifs.
+GENERATIONS = ("gen1", "gen2", "gen3", "gen4", "gen5")
+
 
 def get_base_path():
     """Return the source root or PyInstaller executable directory."""
@@ -37,10 +40,9 @@ def get_logs_dir():
     return get_config_dir() / "logs"
 
 
-def asset_path(*parts, root=None):
+def asset_path(*parts):
     """Return a path under the bundled assets directory."""
-    base_path = PROJECT_ROOT if root is None else Path(root)
-    return base_path / "assets" / Path(*parts)
+    return PROJECT_ROOT / "assets" / Path(*parts)
 
 
 def normalize_path_value(value):

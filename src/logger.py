@@ -1,6 +1,11 @@
 """Logging module for application diagnostics."""
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
+
+# IdleMon is meant to run for hours at a time, so cap the log on disk.
+LOG_MAX_BYTES = 1_000_000
+LOG_BACKUP_COUNT = 3
 
 
 def _has_file_handler(logger, log_file):
@@ -25,7 +30,12 @@ class LogManager:
         self.error_logger.setLevel(logging.INFO)
         self.error_logger.propagate = False
         if not _has_file_handler(self.error_logger, log_file):
-            error_handler = logging.FileHandler(log_file)
+            error_handler = RotatingFileHandler(
+                log_file,
+                maxBytes=LOG_MAX_BYTES,
+                backupCount=LOG_BACKUP_COUNT,
+                encoding='utf-8',
+            )
             error_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
             self.error_logger.addHandler(error_handler)
 

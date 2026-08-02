@@ -5,7 +5,6 @@ import numbers
 from pathlib import Path
 
 import paths
-from paths import PROJECT_ROOT, get_config_file, get_logs_dir
 
 DEFAULT_USER_SETTINGS = {
     "mute_audio": False,
@@ -27,11 +26,8 @@ DEFAULT_RUNTIME_CONFIG = {
     "shiny_rate": 2000,
     "save_data_file": "save_data.json",
     "pokemon_data_files": {
-        "gen1": "assets/data/gen1_pokemon_names.txt",
-        "gen2": "assets/data/gen2_pokemon_names.txt",
-        "gen3": "assets/data/gen3_pokemon_names.txt",
-        "gen4": "assets/data/gen4_pokemon_names.txt",
-        "gen5": "assets/data/gen5_pokemon_names.txt"
+        generation: f"assets/data/{generation}_pokemon_names.txt"
+        for generation in paths.GENERATIONS
     }
 }
 
@@ -47,9 +43,8 @@ class ConfigError(RuntimeError):
 
 def _create_directories():
     """Create writable portable runtime directories."""
-    config_dir = paths.get_config_dir()
-    config_dir.mkdir(exist_ok=True)
-    paths.get_logs_dir().mkdir(exist_ok=True)
+    paths.get_config_dir().mkdir(parents=True, exist_ok=True)
+    paths.get_logs_dir().mkdir(parents=True, exist_ok=True)
 
 
 def _log_error(logger, message):
